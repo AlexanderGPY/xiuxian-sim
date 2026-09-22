@@ -2,24 +2,128 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>云隐仙踪 · 筹建中</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>云隐仙踪 · P0 笔墨</title>
+<script>
+  /* 最早的错误捕获：任何脚本异常都记入 window.__errs，供排查与 __G 读取 */
+  window.__errs = [];
+  window.addEventListener('error', function (e) {
+    __errs.push(e.message + ' @' + (e.filename || '?').split('/').pop() + ':' + e.lineno + ':' + e.colno);
+  });
+  window.addEventListener('unhandledrejection', function (e) { __errs.push('promise: ' + e.reason); });
+</script>
 <style>
-  html,body{margin:0;height:100%;background:#f4efe3;display:flex;align-items:center;justify-content:center;
-    font-family:"Kaiti SC","STKaiti","KaiTi",serif;color:#2b2b2b;}
-  .wrap{text-align:center;user-select:none;}
-  .title{font-size:64px;letter-spacing:18px;margin:0 0 8px 18px;text-shadow:0 1px 0 rgba(0,0,0,.08);}
-  .sub{font-size:16px;color:#7a7466;letter-spacing:6px;margin:0 0 28px;}
-  .seal{display:inline-block;width:44px;height:44px;line-height:44px;border:3px solid #a33b2e;color:#a33b2e;
-    border-radius:6px;font-size:22px;transform:rotate(-4deg);margin-bottom:24px;opacity:.9;}
-  .status{font-size:14px;color:#8a8375;letter-spacing:2px;}
+  :root{
+    --paper:#f4efe3; --jiao:#1f1d1a; --nong:#3a3733; --zhong:#5c5852;
+    --dan:#8f8a80; --qing:#c9c4b8; --zhu:#a33b2e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--paper);
+    font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC",serif;color:var(--nong);
+    -webkit-user-select:none;user-select:none}
+  #stage{position:absolute;inset:0}
+  /* ---- 顶栏 ---- */
+  #topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;
+    padding:10px 16px;pointer-events:none}
+  #topbar>*{pointer-events:auto}
+  .seal{width:40px;height:40px;line-height:40px;text-align:center;border:3px solid var(--zhu);
+    color:var(--zhu);border-radius:5px;font-size:19px;transform:rotate(-4deg);
+    background:rgba(244,239,227,.85);box-shadow:0 1px 4px rgba(31,29,26,.12)}
+  .title{font-size:22px;color:var(--jiao);letter-spacing:5px}
+  .title small{font-size:12px;color:var(--dan);letter-spacing:2px;margin-left:8px}
+  #date{margin-left:auto;font-size:16px;color:var(--zhong);letter-spacing:2px;
+    background:rgba(244,239,227,.85);padding:4px 12px;border:1px solid rgba(92,88,82,.25);
+    border-radius:3px}
+  /* ---- 速度控制 ---- */
+  #speed{display:flex;gap:4px;margin-left:10px}
+  #speed button{width:38px;height:32px;font-family:inherit;font-size:14px;color:var(--zhong);
+    background:rgba(244,239,227,.9);border:1px solid rgba(92,88,82,.35);border-radius:3px;
+    cursor:pointer;transition:all .12s}
+  #speed button:hover{border-color:var(--nong);color:var(--nong)}
+  #speed button.on{background:var(--zhu);border-color:var(--zhu);color:var(--paper)}
+  /* ---- 底栏 ---- */
+  #bottombar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:16px;
+    padding:8px 16px;font-size:13px;color:var(--dan);letter-spacing:1px;
+    background:linear-gradient(transparent,rgba(244,239,227,.9) 40%);pointer-events:none}
+  #bottombar .dot{color:var(--qing)}
+  #stats{margin-left:auto;color:var(--dan)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="stage"></div>
+
+<div id="topbar">
   <div class="seal">云隐</div>
-  <h1 class="title">云隐仙踪</h1>
-  <p class="sub">水墨修仙门派模拟器</p>
-  <p class="status">筹备中 —— P0 未开工 · 设计文档见 docs/产品文档.md</p>
+  <div class="title">云隐仙踪<small>P0 · 笔墨</small></div>
+  <div id="date">—</div>
+  <div id="speed">
+    <button data-s="0" title="暂停">⏸</button>
+    <button data-s="1" class="on" title="一倍速">▶</button>
+    <button data-s="2" title="二倍速">▶▶</button>
+    <button data-s="4" title="四倍速">▶▶▶</button>
+  </div>
 </div>
+
+<div id="bottombar">
+  <span>拖拽平移</span><span class="dot">·</span>
+  <span>滚轮缩放</span><span class="dot">·</span>
+  <span>控制台 <b>__G</b> 调试 / <b>__G.test()</b> 回归</span><span class="dot">·</span>
+  <span id="bootinfo">烘焙中…</span>
+  <span id="stats"></span>
+</div>
+
+<script src="js/core/boot.js"></script>
+<script src="js/core/rng.js"></script>
+<script src="js/core/bus.js"></script>
+<script src="js/core/tick.js"></script>
+<script src="js/render/ink/palette.js"></script>
+<script src="js/render/ink/paper.js"></script>
+<script src="js/render/ink/brush.js"></script>
+<script src="js/sim/time.js"></script>
+<script src="js/sim/map.js"></script>
+<script src="js/core/save.js"></script>
+<script src="js/render/canvas.js"></script>
+<script src="js/render/scene.js"></script>
+<script src="js/core/debug.js"></script>
+<script src="test/tests.js"></script>
+<script>
+(function (X) {
+  // 烘焙水墨资产 → 生成地图 → 静态世界图 → 启动
+  X.Paper.bake(7);
+  const brushMs = X.Brush.bake();
+  X.Map.generate();
+  X.Canvas.init(document.getElementById('stage'));
+  X.Scene.render();
+
+  // HUD：日期
+  const dateEl = document.getElementById('date');
+  const refresh = () => { dateEl.textContent = X.Time.dateString(); };
+  X.Bus.on('time:shichen', refresh);
+  refresh();
+
+  // HUD：速度
+  const btns = [...document.querySelectorAll('#speed button')];
+  const setBtn = s => btns.forEach(b => b.classList.toggle('on', +b.dataset.s === s));
+  btns.forEach(b => b.addEventListener('click', () => {
+    const s = +b.dataset.s;
+    if (s === 0) { X.Tick.stop(); setBtn(0); }
+    else { X.Tick.setSpeed(s); X.Tick.start(); setBtn(s); }
+  }));
+  X.Bus.on('tick:speed', s => X.Tick.speed && setBtn(s));
+
+  // HUD：信息/帧率
+  document.getElementById('bootinfo').textContent =
+    `笔触 ${X.Brush.count} 枝 · 烘焙 ${brushMs}ms · 地图种子 ${X.Map.seed}`;
+  const statsEl = document.getElementById('stats');
+  setInterval(() => {
+    const s = X.Canvas.stats();
+    statsEl.textContent = `${s.fps}fps · ${s.zoom}×`;
+  }, 600);
+
+  X.Tick.start();
+  if (window.__errs && __errs.length) X.log('启动期错误:', __errs);
+  X.log('P0 笔墨就绪', { version: X.VERSION, brushMs, seed: X.Map.seed });
+})(XIANG);
+</script>
 </body>
 </html>
