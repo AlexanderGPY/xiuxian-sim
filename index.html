@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>云隐仙踪 · P4 江湖已远</title>
+<title>云隐仙踪 · 云卷云舒</title>
 <script>
   /* 最早的错误捕获：任何脚本异常都记入 window.__errs，供排查与 __G 读取 */
   window.__errs = [];
@@ -143,11 +143,28 @@
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
     border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:6px}
   #btn-feng.on{background:var(--hua);border-color:var(--hua);color:var(--paper)}
-  #btn-travel,#btn-jianghu,#btn-market{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
+  #btn-travel,#btn-jianghu,#btn-market,#btn-story,#btn-cloud,#btn-clear{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
     border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:4px}
-  #btn-travel:hover,#btn-jianghu:hover,#btn-market:hover{border-color:var(--nong);color:var(--jiao)}
-  #btn-travel.alert,#btn-market.alert{color:var(--zhu);border-color:var(--zhu)}
+  #btn-travel:hover,#btn-jianghu:hover,#btn-market:hover,#btn-story:hover,#btn-cloud:hover,#btn-clear:hover{border-color:var(--nong);color:var(--jiao)}
+  #btn-travel.alert,#btn-market.alert,#btn-story.alert,#btn-cloud.alert{color:var(--zhu);border-color:var(--zhu)}
+  #btn-clear.on{background:var(--zhong);color:var(--paper);border-color:var(--zhong)}
+  /* 清晰模式：整体放大 + 提对比 */
+  body.clear{font-size:15px}
+  body.clear .chip,body.clear #date{font-size:15px}
+  body.clear .bcard b{font-size:15px}body.clear .bcard span{font-size:12.5px}
+  body.clear #selinfo .sub,body.clear #selinfo .hint{font-size:13.5px}
+  body.clear #log div{font-size:13.5px}
+  body.clear .toast{font-size:16px}
+  body.clear .bar i{height:9px}
+  body.clear .panel{border-width:2px}
+  /* 教学条 */
+  #tut{position:absolute;left:50%;transform:translateX(-50%);bottom:54px;z-index:15;display:flex;align-items:center;gap:10px;
+    background:rgba(247,241,226,.96);border:1px solid rgba(106,95,76,.55);border-left:3px solid var(--hua);
+    border-radius:2px 8px 3px 9px;padding:7px 14px;font-size:13px;color:var(--zhong);letter-spacing:1px;
+    box-shadow:0 4px 14px rgba(60,50,34,.25)}
+  #tut b{color:var(--hua);font-weight:normal}
+  #tut button{font-family:inherit;font-size:12px;color:var(--dan);background:none;border:none;cursor:pointer;text-decoration:underline}
   .lotrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed rgba(106,95,76,.3)}
   .lotrow b{font-size:14px;color:var(--jiao);font-weight:normal;min-width:120px}
   .lotrow .ldesc{font-size:11px;color:var(--dan);flex:1}
@@ -191,7 +208,7 @@
 
 <div id="topbar">
   <div class="seal">云隐</div>
-  <div class="title">云隐仙踪<small>P4 · 江湖已远</small></div>
+  <div class="title">云隐仙踪<small>卷终 · 云卷云舒</small></div>
   <div id="res"></div>
   <div id="date">—</div>
   <div id="speed">
@@ -210,6 +227,9 @@
   <button id="btn-travel" title="派遣修士游历九州">游历</button>
   <button id="btn-jianghu" title="门派恩怨·客卿">江湖</button>
   <button id="btn-market" title="坊市拍卖·售货">坊市</button>
+  <button id="btn-story" title="旧案主线·飞升传承">旧案</button>
+  <button id="btn-cloud" title="云端同步·参观·排行（离线可不启）">云端</button>
+  <button id="btn-clear" title="清晰模式：放大字号、增强对比">清晰</button>
 </div>
 
 <div id="left">
@@ -255,6 +275,7 @@
 <script src="js/db/world.js"></script>
 <script src="js/db/npcs.js"></script>
 <script src="js/db/events.js"></script>
+<script src="js/db/story.js"></script>
 <script src="js/sim/path.js"></script>
 <script src="js/sim/inventory.js"></script>
 <script src="js/sim/build.js"></script>
@@ -268,6 +289,8 @@
 <script src="js/sim/travel.js"></script>
 <script src="js/sim/relation.js"></script>
 <script src="js/sim/auction.js"></script>
+<script src="js/sim/tribulation.js"></script>
+<script src="js/sim/story.js"></script>
 <script src="js/sim/farm.js"></script>
 <script src="js/sim/disciple.js"></script>
 <script src="js/sim/work.js"></script>
@@ -280,6 +303,8 @@
 <script src="js/core/debug.js"></script>
 <script src="test/tests.js"></script>
 <script src="js/ui/qte.js"></script>
+<script src="js/ui/tutorial.js"></script>
+<script src="js/net/client.js"></script>
 <script src="js/ui/hud.js"></script>
 <script>
 (function (X) {
@@ -321,7 +346,7 @@
 
   X.Tick.start();
   if (window.__errs && __errs.length) X.log('启动期错误:', __errs);
-  X.log('P4 江湖已远就绪', { version: X.VERSION });
+  X.log("云卷云舒·全卷终就绪", { version: X.VERSION });
 })(XIANG);
 </script>
 </body>

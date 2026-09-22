@@ -46,10 +46,15 @@
     if (X.Travel) X.Travel.reset();
     if (X.Relation) X.Relation.reset();
     if (X.Auction) X.Auction.reset();
+    if (X.Story) X.Story.reset();
+    if (X.Trib) X.Trib.reset();
     X.Feng._dirty = true;
     if (X.Form) X.Form._dirty = true;
     X.Solar.buff = { growthMult: 1, yieldMult: 1, cold: 0, until: 0 };
     G.repVal = 10; G.found = []; G.libBuilt = false; G.hallBuilt = false;
+    G.ascended = 0; G.endless = false;
+    G.legacy = { points: 0, perks: [], ascList: [] };
+    G.tutStep = 0; G.tutSkip = false;
 
     if (seed !== undefined) X.rng = X.Rng(seed);
     if (!X.Map.seed || seed !== undefined) { X.Map.mut = {}; X.Map.generate(seed); }
@@ -99,6 +104,8 @@
     });
   }
   G.libBonus = () => (G.libBuilt ? 0.05 : 0);
+  // P5：传承代（12 年一代；三代无人飞升 → 道统断绝）
+  G.legacyGen = () => 1 + Math.floor(X.Time.day / 360 / 12);
   // 游历所得残卷（含拍卖）：随机一部未得之典
   G.findScroll = function () {
     const owned = new Set(X.Disciple.list.map(d => d.scId).filter(Boolean));
@@ -176,6 +183,13 @@
     if (!G.inited) return;
     G.autoFarm();
     if (X.Combat) X.Combat.tryWave(X.Time.day);   // 妖潮
+    if (X.Trib) {   // 渡劫兜底：劫云压顶超过 35 日仍无人操持 → 托付天命
+      for (const d of X.Disciple.list) {
+        if (d.kind === '修士' && X.Trib.ready(d) && (X.Trib.lastDay[d.id] || -999) + 35 <= X.Time.day) {
+          X.Trib.begin(d, false);
+        }
+      }
+    }
   });
 
   // 平均心境 / 人口
@@ -198,6 +212,12 @@
     travel: X.Travel ? X.Travel.snapshot() : null,
     relation: X.Relation ? X.Relation.snapshot() : null,
     auction: X.Auction ? X.Auction.snapshot() : null,
+    story: X.Story ? X.Story.snapshot() : null,
+    trib: X.Trib ? X.Trib.snapshot() : null,
+    ascended: G.ascended,
+    endless: G.endless,
+    tutStep: G.tutStep, tutSkip: G.tutSkip,
+    legacy: { ...G.legacy, ascList: G.legacy.ascList.slice(0, 10), perks: [...G.legacy.perks] },
   });
   G.restore = function (o) {
     G.home = o.home || [40, 30];
@@ -213,6 +233,13 @@
     if (X.Travel) X.Travel.restore(o.travel || {});
     if (X.Relation) X.Relation.restore(o.relation || {});
     if (X.Auction) X.Auction.restore(o.auction || {});
+    if (X.Story) X.Story.restore(o.story || {});
+    if (X.Trib) X.Trib.restore(o.trib || {});
+    G.ascended = o.ascended || 0;
+    G.endless = !!o.endless;
+    G.tutStep = o.tutStep || 0;
+    G.tutSkip = !!o.tutSkip;
+    G.legacy = o.legacy || { points: 0, perks: [], ascList: [] };
     G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0 }, o.stats);
     scanTerrain();
     scanLandmarks();

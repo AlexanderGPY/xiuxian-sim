@@ -106,12 +106,30 @@
         <div class="sub">百艺：丹${Math.floor(d.craft.dan)} 器${Math.floor(d.craft.qi)} 符${Math.floor(d.craft.fu)}${d.artifact ? ' · 持' + ((X.Craft.artifacts.find(a => a.iid === d.artifact) || {}).name || '宝') : ''}</div>
         ${artifactRow(d)}
         ${foundInfo}${foundBtn}
+        ${d.realm === 9 && X.Trib ? (() => {
+          const ready = X.Trib.ready(d);
+          const can = X.Trib.canTri(d);
+          const daolv = d.daolv ? `<div class="sub">道侣：${(X.Npcs.byId[d.daolv] || {}).name || '—'}（天劫护法）</div>`
+            : (X.Relation.guests().some(g => X.Relation.canDaolv(d, g.npc.id))
+              ? `<button class="act small" id="btn-daolv">与驻山客卿结为道侣</button>` : '');
+          return `<div class="sub" style="color:var(--zhu)">渡劫境·第${d.stage + 1}/9 劫</div>
+            ${ready && can ? '<button class="act" id="btn-trib">亲手渡劫（时机条）</button> <button class="act small" id="btn-trib-auto">托付天命</button>' : ready ? '<div class="hint">雷云未聚（三十日一劫）</div>' : ''}${daolv}`;
+        })() : ''}
         ${bar('心境', d.mood, d.mood < 30 ? 'bad' : '')}
         ${bar('气血', d.hp / X.Disciple.maxHp(d) * 100)}
         ${bar('饥饿', d.needs.hunger)}${bar('睡眠', d.needs.sleep)}
         ${bar('舒适', d.needs.comfort)}${bar('美观', d.needs.beauty)}${bar('社交', d.needs.social)}`;
       const fb = el('btn-found');
       if (fb) fb.onclick = () => openScriptureModal(d);
+      const tb = el('btn-trib');
+      if (tb) tb.onclick = () => X.Trib.begin(d, true);
+      const ta = el('btn-trib-auto');
+      if (ta) ta.onclick = () => { const r = X.Trib.begin(d, false); if (!r.ok) toast(r.why); };
+      const dv = el('btn-daolv');
+      if (dv) dv.onclick = () => {
+        const g = X.Relation.guests().find(g => X.Relation.canDaolv(d, g.npc.id));
+        if (g) { const r = X.Relation.pairDaolv(d, g.npc.id); toast(r.ok ? '结为道侣' : r.why); }
+      };
       document.querySelectorAll('#selinfo [data-art]').forEach(btn => {
         btn.onclick = () => { X.Craft.equip(d, +btn.dataset.art); refreshSel(); };
       });
@@ -364,13 +382,14 @@
   H.modalKind = null;
   function rerenderModal() {
     if (!H.modalKind || !el('modal')) return;
-    const body = el('modal-body');
-    if (!body) return;
     const html = ({
-      travel: travelBody, jianghu: jianghuBody, market: marketBody,
+      travel: travelBody, jianghu: jianghuBody, market: marketBody, story: storyBody,
     })[H.modalKind]();
-    if (html !== null && html !== undefined) body.innerHTML = html;
-    wireModal();
+    if (html === null || html === undefined) return;
+    Promise.resolve(html).then(h => {
+      const body = el('modal-body');
+      if (body && H.modalKind) { body.innerHTML = h; wireModal(); cloudWire(); }
+    });
   }
   function wireModal() {
     const body = el('modal-body');
@@ -396,6 +415,21 @@
         toast(r.ok ? `售出${X.Items[r.item].name}×${r.n}，得灵石 ${r.ling}` : r.why);
         rerenderModal();
       });
+    // P5 旧案抉择 / 传承功德
+    body.querySelectorAll('[data-choice]').forEach(b =>
+      b.onclick = () => {
+        const [nid, oi] = b.dataset.choice.split(':');
+        X.Story.choose(nid, +oi);
+        rerenderModal();
+      });
+    body.querySelectorAll('[data-perk]').forEach(b =>
+      b.onclick = () => {
+        const r = X.Trib.buyPerk(b.dataset.perk);
+        toast(r.ok ? '传承已承' : r.why);
+        rerenderModal();
+      });
+    const eb = body.querySelector('#endless-btn');
+    if (eb) eb.onclick = () => { X.Game.endless = true; X.Story.ending = null; toast('无尽模式：终局判定已关闭'); rerenderModal(); };
   }
 
   // ---- 游历面板 ----
@@ -473,6 +507,104 @@
       <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:10px 0 2px">摆摊售货（涨声望）</div>${sellRow}`;
   }
 
+  // ---- 旧案面板（P5） ----
+  function storyBody() {
+    const S = X.Story;
+    const pend = S.choicePending ? S.nodeById(S.choicePending) : null;
+    const choiceHtml = pend ? `<div style="margin:10px 0;padding:10px;border:1px solid var(--zhu);border-radius:6px">
+      <div style="font-size:13.5px;color:var(--zhu);margin-bottom:4px">${pend.name}</div>
+      <div class="hint" style="margin-bottom:8px">${pend.text}</div>
+      ${pend.opts.map((o, i) => `<button class="act small" data-choice="${S.choicePending}:${i}">${o.label}</button>`).join(' ')}
+    </div>` : '';
+    const seen = S.seenLog.map(r => `<div class="hint" style="padding:2px 0">卷${'一二三四五'[r.ch - 1]} · 第${r.day}日 · ${r.name}</div>`).join('');
+    const legacy = X.Game.legacy;
+    const perks = X.Trib.PERKS.map(p => {
+      const owned = X.Trib.hasPerk(p.id);
+      return `<div class="locrow"><b>${p.name}</b><span style="flex:1">${p.desc}</span>
+        ${owned ? '<u class="good">已承</u>' : `<button class="act small" data-perk="${p.id}">功德${p.cost}</button>`}</div>`;
+    }).join('');
+    const end = S.ending ? `<div style="margin-top:10px;padding:10px;border:2px solid var(--zhu);border-radius:8px;text-align:center">
+      <div style="font-size:17px;color:var(--zhu);letter-spacing:4px">【${S.ending.name}】</div>
+      <div class="hint" style="margin:6px 0">${S.ending.note}（第${S.ending.day}日）</div>
+      <button class="act small" id="endless-btn">无尽模式·继续经营</button></div>` : '';
+    return `<div style="margin-bottom:6px">旧案进度 ${S.progress()}/24 · 已终卷${S.chapter} · 飞升 ${X.Game.ascended} 人 · 功德 ${legacy.points}</div>
+      ${end}${choiceHtml}
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:8px 0 2px">旧案记闻</div>
+      ${seen || '<div class="hint">尚无线索——经营门派、游历九州，真相自会浮现</div>'}
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:10px 0 2px">飞升传承（功德 ${legacy.points}）</div>${perks}
+      ${legacy.ascList.length ? `<div class="hint" style="margin-top:6px">登仙录：${legacy.ascList.map(a => `${a.name}(第${a.day}日)`).join('、')}</div>` : ''}`;
+  }
+  // ---- 云端面板（P7） ----
+  function cloudBody() {
+    const C = X.Cloud;
+    if (!C || !C.online) return `<div class="hint" style="padding:8px 0">未探测到云端（需 node server/server.js @ :8700）。单机完全可玩，云端仅同步/参观/排行。</div>`;
+    if (!C.token) {
+      return `<div style="padding:6px 0"><input id="cloud-name" placeholder="掌门道号（即账号）" style="height:30px;padding:0 8px;border:1px solid rgba(106,95,76,.5);border-radius:4px;background:var(--paper);color:var(--jiao);font-family:inherit">
+        <button class="act small" id="cloud-login">登录/注册</button></div>
+        <div class="hint">轻账号：道号即身份，无密码——个人自用与朋友共享足够。</div>`;
+    }
+    let main = `<div style="margin:4px 0">已登录：<b style="color:var(--hua)">${C.name}</b></div>
+      <div style="margin:8px 0 4px;font-size:13px;color:var(--jiao);letter-spacing:2px">云存档（LWW，取回前自动留底本地）</div>`;
+    for (const s of [1, 2, 3]) main += `<button class="act small" data-cup="${s}">上传至槽${s}</button> `;
+    main += `<div style="margin:6px 0">`;
+    for (const s of [1, 2, 3]) main += `<button class="act small" data-cdown="${s}">自槽${s}取回</button> `;
+    main += `</div><div style="margin:10px 0 4px;font-size:13px;color:var(--jiao);letter-spacing:2px">门派参观与排行</div>
+      <button class="act small" id="cloud-sect-up">上传本派快照</button>
+      <button class="act small" id="cloud-board-up">投稿排行（最高声望）</button>
+      <button class="act small" id="cloud-view">拉取参观/排行</button>
+      <div id="cloud-list" style="margin-top:8px"></div>`;
+    return main;
+  }
+  function cloudWire() {
+    const box = el('modal-body');
+    if (!box) return;
+    const login = el('cloud-login');
+    if (login) login.onclick = async () => {
+      const n = el('cloud-name').value.trim();
+      if (!n) return toast('请输入道号');
+      const r = await X.Cloud.login(n);
+      toast(r.ok ? `欢迎，${r.name}` : '登录失败');
+      rerenderModal();
+    };
+    const up = el('cloud-sect-up');
+    if (up) up.onclick = async () => {
+      const realms = {};
+      X.Disciple.list.forEach(d => { const n = X.Realms.realmName(d); realms[n] = (realms[n] || 0) + 1; });
+      const snap = { 年: X.Time.year, 人口: X.Disciple.list.length, 境界: realms, 声望: X.Game.rep(), 飞升: X.Game.ascended, 妖潮波次: X.Combat.wave, 建筑: X.Game.stats.buildingsDone, 斩妖: X.Combat.killed };
+      const r = await X.Cloud.postSect(snap);
+      toast(r.ok ? '快照已上传，静候参观' : '上传失败');
+    };
+    const bu = el('cloud-board-up');
+    if (bu) bu.onclick = async () => {
+      const r = await X.Cloud.postBoard('topRep', X.Game.rep());
+      toast(r.ok ? '已投稿（最高声望榜）' : '投稿失败');
+    };
+    const vw = el('cloud-view');
+    if (vw) vw.onclick = async () => {
+      const [b, s] = await Promise.all([X.Cloud.board(), X.Cloud.sects()]);
+      const list = el('cloud-list');
+      if (!list) return;
+      let html = '<div class="hint">声望榜：' + ((b.board && b.board.topRep) || []).slice(0, 5).map((r, i) => `${i + 1}.${r.name}(${r.value})`).join(' · ') + '</div>';
+      html += '<div class="hint" style="margin-top:4px">参观：' + ((s.sects) || []).slice(0, 5).map(x => `${x.name}·${(x.snap['年'] || 1)}年·人口${x.snap['人口']}·飞升${x.snap['飞升'] || 0}`).join('｜') + '</div>';
+      list.innerHTML = html;
+    };
+    box.querySelectorAll('[data-cup]').forEach(b => b.onclick = async () => {
+      const r = await X.Cloud.putSave(+b.dataset.cup, X.Save.snapshot());
+      toast(r.ok ? `已上传云端槽${b.dataset.cup}` : '上传失败');
+    });
+    box.querySelectorAll('[data-cdown]').forEach(b => b.onclick = async () => {
+      const r = await X.Cloud.getSave(+b.dataset.cdown);
+      if (!r.ok) return toast(r.why || '空槽');
+      try {
+        X.Save.save('auto');
+        X.Save.importText(r.json);
+        H.modalKind = null; closeModal();
+        X.Scene.render(); refreshBuildMenu();
+        toast('已取回云端存档（本地原进度已入自动档）');
+      } catch (e) { toast('存档解析失败'); }
+    });
+  }
+
   function wireP4Buttons() {
     el('btn-travel').onclick = () => {
       if (H.modalKind === 'travel') { H.modalKind = null; return closeModal(); }
@@ -489,6 +621,37 @@
       H.modalKind = 'market';
       openModal('坊市·万宝楼', marketBody()); wireModal();
     };
+    // P5 旧案 / P7 云端
+    el('btn-story').onclick = () => {
+      if (H.modalKind === 'story') { H.modalKind = null; return closeModal(); }
+      H.modalKind = 'story';
+      openModal('旧案·灰烬遗音', storyBody()); wireModal();
+    };
+    el('btn-cloud').onclick = () => {
+      if (H.modalKind === 'cloud') { H.modalKind = null; return closeModal(); }
+      H.modalKind = 'cloud';
+      openModal('云端·云卷云舒', cloudBody()); wireModal(); cloudWire();
+    };
+    // P5 结局/抉择弹层
+    X.Bus.on('story:choice', n => { toast(`旧案待决：${n.name}（旧案面板）`); el('btn-story').classList.add('alert'); });
+    X.Bus.on('story:ending', e => {
+      const wrap = document.createElement('div');
+      wrap.id = 'modal';
+      wrap.innerHTML = `<div class="mbox" style="text-align:center">
+        <div style="font-size:26px;color:var(--zhu);letter-spacing:8px;margin:10px 0">${e.name}</div>
+        <div class="hint" style="font-size:14px;letter-spacing:2px">${e.note}</div>
+        <div class="hint" style="margin:10px 0">第 ${e.day} 日 · 飞升 ${X.Game.ascended} 人 · 声望 ${X.Game.rep()}</div>
+        <button class="act" id="endless-open">无尽模式·继续经营</button></div>`;
+      document.body.appendChild(wrap);
+      wrap.querySelector('#endless-open').onclick = () => {
+        X.Game.endless = true; X.Story.ending = null;
+        wrap.remove(); toast('终局判定已关闭，山门长青');
+      };
+    });
+    X.Bus.on('trib:on', t => toast(`${t.d.name} 第${t.no}劫将至——旧案面板/弟子面板可亲手渡劫`));
+    X.Bus.on('ascend:done', () => toast('有弟子飞升！功德传世（旧案面板·传承）'));
+    // P7 云端探测（离线静默）
+    if (X.Cloud) { X.Cloud.loadAuth(); X.Cloud.ping().then(on => { if (on && X.Cloud.token) el('btn-cloud').classList.add('alert'); }); }
     X.Bus.on('auction:on', () => { toast('万宝楼开槌——坊市面板可竞价'); });
     X.Bus.on('wave:on', w => { toast(`妖潮第 ${w} 波来袭！修士将自动迎敌`); });
     X.Bus.on('raid:on', e => { toast(`${X.Npcs.SECT_NAMES[e.sect]}犯山：${e.names.join('、')}！`); });
@@ -505,6 +668,25 @@
     });
     refreshRes(); refreshSel();
     wireP4Buttons();
+    // P6 教学条 + 清晰模式
+    const tut = document.createElement('div');
+    tut.id = 'tut'; tut.style.display = 'none';
+    document.body.appendChild(tut);
+    const refreshTut = () => {
+      const s = X.Tut ? X.Tut.step() : null;
+      tut.style.display = s ? 'flex' : 'none';
+      if (s) tut.innerHTML = `<b>掌门手册 ${s.idx}/${s.total}·${s.name}</b><span>${s.hint}</span><button id="tut-skip">跳过</button>`;
+      const sk = el('tut-skip');
+      if (sk) sk.onclick = () => { X.Tut.skip(); refreshTut(); };
+    };
+    setInterval(refreshTut, 1200); refreshTut();
+    const clr = el('btn-clear');
+    try { if (localStorage.getItem('xiang_clear') === '1') { document.body.classList.add('clear'); clr.classList.add('on'); } } catch {}
+    clr.onclick = () => {
+      const on = document.body.classList.toggle('clear');
+      clr.classList.toggle('on', on);
+      try { localStorage.setItem('xiang_clear', on ? '1' : '0'); } catch {}
+    };
     el('btn-feng').onclick = () => {
       X.Dyn.fengView = !X.Dyn.fengView;
       el('btn-feng').classList.toggle('on', X.Dyn.fengView);

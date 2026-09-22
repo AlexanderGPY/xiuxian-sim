@@ -1,6 +1,6 @@
-/* 存档 v5：+ 江湖（声望/残卷/妖兽妖潮/游历/门派恩怨客卿/拍卖）。 */
+/* 存档 v6：+ 天劫（旧案/渡劫/飞升传承/道侣/结局）。 */
 (function (X) {
-  const VER = 5;
+  const VER = 6;
   const KEY = s => `xiang_save_${s}`;
   X.Save = {
     VER,

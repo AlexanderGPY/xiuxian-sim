@@ -36,6 +36,8 @@
       bornDay: X.Time.day - age * 360,
       // P3 百艺
       craft: { dan: 0, qi: 0, fu: 0 }, buffs: [], artifact: 0, hpMaxBuff: 0, lifeBuff: 0,
+      // P5
+      daolv: 0,
     };
     return d;
   };
@@ -258,12 +260,15 @@
     const t = d.task;
     if (!t) {
       if (d.kind === '修士') {
-        // 妖兽/犯山 > 冲关 > 百艺委托 > 打坐
+        // 妖兽/犯山 > 渡劫待雷 > 冲关 > 百艺委托 > 打坐
         if (X.Combat && X.Combat.threat() && d.hp > X.Disciple.maxHp(d) * 0.35) {
           d.task = { type: 'fight', phase: 'go' };
           d.state = '迎敌';
         }
-        else if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) startBreak(d);
+        else if (X.Trib && X.Trib.ready(d)) {
+          X.Trib.arm(d);   // 劫云压顶：面板手动渡劫，超时自动托付天命
+        }
+        else if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && d.realm !== 9 && X.Realms.atCap(d))) startBreak(d);
         else {
           const order = X.Craft ? X.Craft.claim(d) : null;
           if (order) startCraft(d, order);
@@ -434,7 +439,7 @@
     eligible: d.eligible, readyDay: d.readyDay, breakCd: d.breakCd, failPity: d.failPity,
     cultSpot: d.cultSpot, bornDay: d.bornDay,
     craft: { ...d.craft }, buffs: (d.buffs || []).map(b => ({ ...b })), artifact: d.artifact || 0,
-    hpMaxBuff: d.hpMaxBuff || 0, lifeBuff: d.lifeBuff || 0, travel: d.travel || 0,
+    hpMaxBuff: d.hpMaxBuff || 0, lifeBuff: d.lifeBuff || 0, travel: d.travel || 0, daolv: d.daolv || 0,
   }));
   D.restore = function (arr) {
     D.list = []; D.nextId = 1;
@@ -448,7 +453,7 @@
         eligible: !!r.eligible, readyDay: r.readyDay || 0, breakCd: r.breakCd || 0, failPity: r.failPity || 0,
         cultSpot: r.cultSpot || 0, bornDay: r.bornDay !== undefined ? r.bornDay : X.Time.day - 20 * 360,
         craft: r.craft || { dan: 0, qi: 0, fu: 0 }, buffs: r.buffs || [], artifact: r.artifact || 0,
-        hpMaxBuff: r.hpMaxBuff || 0, lifeBuff: r.lifeBuff || 0, travel: 0,
+        hpMaxBuff: r.hpMaxBuff || 0, lifeBuff: r.lifeBuff || 0, travel: 0, daolv: r.daolv || 0,
       });
       D.list.push(d);
     }

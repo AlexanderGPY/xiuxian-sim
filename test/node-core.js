@@ -18,6 +18,7 @@ const FILES = [
   'js/db/world.js',
   'js/db/npcs.js',
   'js/db/events.js',
+  'js/db/story.js',
   'js/sim/path.js',
   'js/sim/inventory.js',
   'js/sim/build.js',
@@ -31,6 +32,9 @@ const FILES = [
   'js/sim/travel.js',
   'js/sim/relation.js',
   'js/sim/auction.js',
+  'js/sim/tribulation.js',
+  'js/sim/story.js',
+  'js/ui/tutorial.js',
   'js/sim/farm.js',
   'js/sim/disciple.js',
   'js/sim/work.js',
@@ -44,5 +48,7 @@ for (const f of FILES) {
   eval(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
 }
 
-const r = XIANG.Tests.run(m => console.log(m));
-process.exit(r.fails.length ? 1 : 0);
+(async () => {
+  const r = await XIANG.Tests.run(m => console.log(m));
+  process.exit(r.fails.length ? 1 : 0);
+})();

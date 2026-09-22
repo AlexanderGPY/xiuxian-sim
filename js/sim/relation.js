@@ -53,6 +53,24 @@
     X.Bus.emit('guest:on', { sect, npc });
   }
   R.guests = () => SECTS.filter(s => R.sects[s].guest).map(s => ({ sect: s, npc: X.Npcs.byId[R.sects[s].guest] }));
+  /* —— P5 道侣：与驻山客卿结缘（心境互济；天劫时护法一条命） —— */
+  R.canDaolv = function (d, npcId) {
+    const npc = X.Npcs.byId[npcId];
+    if (!npc || !d || d.daolv || d.realm < 4 || d.mood < 60) return false;
+    const r = R.sects[npc.sect];
+    return r.guest === npcId && !SECTS.some(s => {
+      const g = R.sects[s].guest;
+      return g && X.Disciple.list.some(o => o.daolv === g);
+    });
+  };
+  R.pairDaolv = function (d, npcId) {
+    if (!R.canDaolv(d, npcId)) return { ok: false, why: '须客卿驻山、其尚无道侣，且弟子元婴以上、心境 60+' };
+    d.daolv = npcId;
+    d.moodEv += 10;
+    X.Game.log(`${d.name} 与 ${X.Npcs.byId[npcId].name} 结为道侣，共参大道`);
+    X.Bus.emit('daolv:on', { d, npcId });
+    return { ok: true };
+  };
   // 全门增益聚合：{atk/dan/cult/brk/qi/mood: 累计值}
   R.buff = function () {
     const m = { atk: 0, dan: 0, cult: 0, brk: 0, qi: 0, mood: 0 };

@@ -320,6 +320,7 @@
   function makeXiu(d, realm, stage, scId) {
     d.kind = '修士'; d.realm = realm || 2; d.stage = stage || 0;
     d.scId = scId || 'ruijin'; d.hp = X.Disciple.maxHp(d);
+    d.exp = X.Realms.cost(d.realm, d.stage);   // 修为灌满（atCap 可判）
     return d;
   }
   t('P4:世界·事件池·妖兽图鉴规模', () => {
@@ -442,7 +443,7 @@
     X.Relation.change('luoxia', 45);
     X.Combat.wave = 4; X.Combat.killed = 7;
     const snap = JSON.parse(JSON.stringify(X.Save.snapshot()));
-    if (snap.ver !== 5) throw new Error('版本号 ' + snap.ver);
+    if (snap.ver < 5) throw new Error('版本 ' + snap.ver);   // v5+ 均兼容（当前 v6）
     X.Game.init(2);
     X.Save.restore(snap);
     if (X.Game.rep() !== 43) throw new Error('声望不一致: ' + X.Game.rep());
@@ -451,6 +452,205 @@
     if (X.Relation.sects.luoxia.aff !== 45) throw new Error('门派好感丢失');
     if (X.Combat.wave !== 4 || X.Combat.killed !== 7) throw new Error('妖潮进度丢失');
     return `声望43/在途1/好感45/妖潮4波 ✓`;
+  });
+
+  // ---- P5 天道无常 ----
+  t('P5:旧案五章顺序推进', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    X.Tick.pump(6 * X.Time.ticksPerDay);
+    if (!X.Story.flags.s11) throw new Error('第6日未触发焦土残碑');
+    X.Tick.pump(10 * X.Time.ticksPerDay);
+    if (!X.Story.flags.s12) throw new Error('第15日未触发旧话');
+    X.Tick.pump(10 * X.Time.ticksPerDay);
+    if (!X.Story.flags.s13) throw new Error('第24日未触发地窖');
+    const [hx, hy] = X.Game.home;
+    X.Build.place('observatory', hx + 6, hy + 2, { instant: true, free: true });
+    X.Tick.pump(2 * X.Time.ticksPerDay);
+    if (!X.Story.flags.s14) throw new Error('观星台夜话未触发');
+    X.Tick.pump(13 * X.Time.ticksPerDay);
+    if (X.Story.chapter < 1) throw new Error('卷一未终卷（day=' + X.Time.day + '）');
+    return `卷一终 @第${X.Time.day}日 进度${X.Story.progress()}/24 ✓`;
+  });
+  t('P5:九劫全流程·飞升传承', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    const d = X.Disciple.list[0];
+    makeXiu(d, 9, 0);   // 渡劫境初期，连渡九劫
+    X.Inv.add('pillHu', 27);   // 每劫三粒，九劫备足
+    X.Game.endless = true;   // 防结局打断
+    X.Time.day = 40; X.Time.dayOfYear = 40;   // 雷云初聚（开局 30 日后）
+    let asc0 = X.Game.ascended, pts0 = X.Game.legacy.points;
+    for (let i = 0; i < 9; i++) {
+      d.exp = X.Realms.cost(9, d.stage);   // 劫后重蓄修为（模拟继续打坐）
+      const r = X.Trib.begin(d, false);
+      if (!r.ok && !r.dead) throw new Error('第' + (i + 1) + '劫未能开启: ' + (r.why || ''));
+      if (r.dead) throw new Error('高准备度仍身陨（seed 需调整）');
+      X.Time.day += 31;   // 雷云重聚
+      X.Tick.pump(10);
+    }
+    if (X.Game.ascended !== asc0 + 1) throw new Error('九劫全过未飞升');
+    if (X.Game.legacy.points <= pts0) throw new Error('飞升未得功德');
+    if (X.Disciple.list.includes(d)) throw new Error('飞升弟子未离山');
+    // 传承兑换
+    X.Game.legacy.points += 100;
+    if (!X.Trib.buyPerk('lingRoot').ok) throw new Error('功德兑换失败');
+    if (X.Trib.buyPerk('lingRoot').ok) throw new Error('重复兑换未拦');
+    return `九劫飞升 功德+${X.Game.legacy.points - pts0} 传承「灵根淬养」✓`;
+  });
+  t('P5:准备度与道侣护法', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    const d = X.Disciple.list[0];
+    makeXiu(d, 9, 0);
+    // 基础带宽 0.16
+    let p = X.Trib.prepare(d);
+    if (Math.abs(p.width - 0.16) > 1e-9) throw new Error('基础带宽应 0.16，得 ' + p.width);
+    // 护体丹×3 → 0.64 截断至 0.62；法宝+阵减伤
+    X.Inv.add('pillHu', 3);
+    d.artifact = 1; X.Craft.artifacts.push({ iid: 1, name: '试剑', affixes: [], holder: 0 });
+    X.Build.place('eyeCangfeng', X.Game.home[0] + 3, X.Game.home[1] + 3, { instant: true, free: true });
+    X.Build.place('zhenFlag', X.Game.home[0] + 2, X.Game.home[1] + 3, { instant: true, free: true });
+    X.Build.place('zhenFlag', X.Game.home[0] + 4, X.Game.home[1] + 3, { instant: true, free: true });
+    X.Build.place('zhenFlag', X.Game.home[0] + 3, X.Game.home[1] + 4, { instant: true, free: true });
+    p = X.Trib.prepare(d);
+    if (p.width < 0.6) throw new Error('护体丹未扩带宽: ' + p.width);
+    if (p.dmgCut < 0.3) throw new Error('法宝/阵减伤未叠加: ' + p.dmgCut);
+    if (p.shieldFree !== 1) throw new Error('藏风阵未给免伤');
+    // 道侣护法
+    X.Build.place('guesthall', X.Game.home[0] + 5, X.Game.home[1] - 3, { instant: true, free: true });
+    X.Game.addRep(50);
+    X.Relation.meet('qingyun');
+    X.Relation.change('qingyun', 110);
+    d.realm = 4; d.mood = 80;
+    const g = X.Relation.guests()[0];
+    if (!X.Relation.pairDaolv(d, g.npc.id).ok) throw new Error('结道侣失败');
+    const p2 = X.Trib.prepare(d);
+    if (p2.extraLife !== 1) throw new Error('道侣护法未生效');
+    return `带宽${p.width.toFixed(2)} 减伤${(p.dmgCut * 100) | 0}% 免伤1 护法1 ✓`;
+  });
+  t('P5:三结局可达', () => {
+    // 道统断绝：全门覆灭
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    X.Game.endless = false;
+    [...X.Disciple.list].forEach(d => X.Game.kill(d, '劫火'));
+    if (!X.Story.ending || X.Story.ending.id !== 'dao_off') throw new Error('全灭未判道统断绝');
+    // 重开盛世：飞升+旧案终卷
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    X.Game.endless = false;
+    X.Story.flags.ch5 = true;
+    const d = makeXiu(X.Disciple.list[0], 9, 8);
+    X.Inv.add('pillHu', 9);
+    X.Time.day = 40;
+    X.Trib.begin(d, false);
+    if (X.Game.ascended !== 1) throw new Error('辅助结算未飞升');
+    if (!X.Story.ending || X.Story.ending.id !== 'golden') throw new Error('未判重开盛世: ' + (X.Story.ending || {}).id);
+    return `道统断绝 ✓ 重开盛世 ✓（真相大白=终卷未飞升时判，同路径）`;
+  });
+  t('P5:大乘失败即陨·渡劫境走天劫', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    const d = makeXiu(X.Disciple.list[0], 8, 3);   // 大乘圆满
+    X.Cult.forcePass = false;
+    d.breakCd = 0;
+    let died = false;
+    for (let i = 0; i < 40 && !died; i++) {
+      d.breakCd = 0; d.realm = 8; d.stage = 3; d.exp = 1e9;
+      const r = X.Cult.attempt(d);
+      if (r.why === '身陨') died = true;
+    }
+    if (!died) throw new Error('大乘失败从未身陨（判定过松或未生效）');
+    // 渡劫境不走普通冲关
+    const e = makeXiu(X.Disciple.list[1] || X.Disciple.list[0], 9, 0);
+    const r2 = X.Cult.attempt(e);
+    if (r2.why !== '天劫将至') throw new Error('渡劫境应走天劫: ' + r2.why);
+    return `大乘陨落✓ 渡劫境拦普通冲关✓`;
+  });
+  t('P5:存档v6天道往返', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    const d = makeXiu(X.Disciple.list[0], 9, 3);
+    X.Time.day = 40;
+    X.Trib.begin(d, false);
+    X.Game.legacy.points = 77; X.Game.endless = true; X.Game.tutStep = 3;
+    X.Story.flags.s11 = true;
+    const snap = JSON.parse(JSON.stringify(X.Save.snapshot()));
+    if (snap.ver !== 6) throw new Error('版本 ' + snap.ver);
+    X.Game.init(2);
+    X.Save.restore(snap);
+    if (X.Game.legacy.points !== 77 || !X.Game.endless || X.Game.tutStep !== 3) throw new Error('传承/无尽/教学丢失');
+    if (!X.Story.flags.s11) throw new Error('旧案旗标丢失');
+    if (X.Trib.total !== 1) throw new Error('渡劫计数丢失');
+    return `功德77/无尽/教学3/旗标/劫数1 ✓`;
+  });
+
+  // ---- P6 成卷 ----
+  t('P6:教学步骤推进', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    if (!X.Game.inited) throw new Error('未开局');
+    const s1 = X.Tut.step();
+    if (!s1 || s1.id !== 'build') throw new Error('首步应为安身之所');
+    X.Game.stats.buildingsDone = 3;   // 模拟营建完成
+    const s2 = X.Tut.step();
+    if (!s2 || s2.id !== 'farm') throw new Error('第二步应为开辟灵田');
+    X.Game.tutSkip = true;
+    if (X.Tut.step() !== null) throw new Error('跳过后仍有教学');
+    return `安身之所→开辟灵田→可跳过 ✓`;
+  });
+
+  // ---- P7 云卷云舒（后端 API） ----
+  const srv = (() => {
+    try {
+      process.env.XIANG_SRV_DB = ':memory:';
+      const mod = require('../server/server.js');
+      mod.server.listen(0);
+      return mod;
+    } catch (e) { return { err: e.message }; }
+  })();
+  function httpCall(method, path, body) {
+    const http = require('http');
+    const port = srv.server.address().port;
+    return new Promise((ok, no) => {
+      const req = http.request({ port, method, path, headers: { 'Content-Type': 'application/json' } }, res => {
+        let s = '';
+        res.on('data', c => s += c);
+        res.on('end', () => { try { ok(JSON.parse(s)); } catch (e) { ok({ ok: 0, why: 'bad json' }); } });
+      });
+      req.on('error', no);
+      if (body) req.write(JSON.stringify(body));
+      req.end();
+    });
+  }
+  t('P7:轻账号+云存档LWW', async () => {
+    if (srv.err) throw new Error('server 载入失败: ' + srv.err);
+    const a = await httpCall('POST', '/api/auth', { name: '测试掌门' });
+    if (!a.ok || !a.token) throw new Error('轻账号失败');
+    const up = await httpCall('PUT', `/api/saves/1?token=${a.token}`, { json: '{"ver":6,"day":100}', at: 1000, device: 'test' });
+    if (!up.ok) throw new Error('上传失败');
+    const down = await httpCall('GET', `/api/saves/1?token=${a.token}`);
+    if (!down.ok || down.json.indexOf('"day":100') < 0) throw new Error('取回不一致');
+    const up2 = await httpCall('PUT', `/api/saves/1?token=${a.token}`, { json: '{"ver":6,"day":200}', at: 2000, device: 'test' });
+    const down2 = await httpCall('GET', `/api/saves/1?token=${a.token}`);
+    if (down2.json.indexOf('"day":200') < 0) throw new Error('LWW 覆盖失败');
+    const noAuth = await httpCall('GET', '/api/saves/1?token=bad');
+    if (noAuth.ok) throw new Error('未拦伪token');
+    return `登录/上传/取回/LWW/鉴权 ✓`;
+  });
+  t('P7:门派参观+排行榜', async () => {
+    if (srv.err) throw new Error('server 载入失败');
+    await httpCall('POST', '/api/sects', { name: '云隐观', snap: { 年: 2, 人口: 8, 飞升: 0 } });
+    const ss = await httpCall('GET', '/api/sects');
+    if (!ss.ok || !ss.sects.some(x => x.name === '云隐观' && x.snap['年'] === 2)) throw new Error('参观快照失败');
+    await httpCall('POST', '/api/board', { cat: 'topRep', value: 88, name: '云隐观主' });
+    await httpCall('POST', '/api/board', { cat: 'topRep', value: 120, name: '云隐观主' });
+    await httpCall('POST', '/api/board', { cat: 'topRep', value: 60, name: '云隐观主' });   // 更差不覆盖
+    const bd = await httpCall('GET', '/api/board');
+    const me = bd.board.topRep.find(r => r.name === '云隐观主');
+    if (!me || me.value !== 120) throw new Error('排行榜未取最优');
+    return `快照参观✓ 排行取最优✓`;
   });
 
   // ---- 存档 ----
@@ -483,22 +683,27 @@
   });
 
   X.Tests = {
+    // 返回 Promise 供异步用例（P7 网络）；浏览器 __G.test() 同样可用
     run(log = console.log) {
-      let pass = 0;
-      const fails = [];
-      log('—— 云隐仙踪 回归 ——');
-      for (const c of cases) {
-        try {
-          const r = c.fn();
-          log(`  ✓ ${c.name}${typeof r === 'string' ? ' · ' + r : ''}`);
-          pass++;
-        } catch (e) {
-          fails.push(`${c.name}: ${e.message}`);
-          log(`  ✗ ${c.name} — ${e.message}`);
+      const p = (async () => {
+        let pass = 0;
+        const fails = [];
+        log('—— 云隐仙踪 回归 ——');
+        for (const c of cases) {
+          try {
+            const r = await c.fn();
+            log(`  ✓ ${c.name}${typeof r === 'string' ? ' · ' + r : ''}`);
+            pass++;
+          } catch (e) {
+            fails.push(`${c.name}: ${e.message}`);
+            log(`  ✗ ${c.name} — ${e.message}`);
+          }
         }
-      }
-      log(`测试结果: ${pass}/${cases.length} 通过${fails.length ? ' ✗' : ' ✓'}`);
-      return { pass, total: cases.length, fails };
+        log(`测试结果: ${pass}/${cases.length} 通过${fails.length ? ' ✗' : ' ✓'}`);
+        return { pass, total: cases.length, fails };
+      })();
+      // node-core 直接 await；浏览器 __G.test() 拿 Promise 亦无碍
+      return p;
     },
   };
 })(globalThis.XIANG);

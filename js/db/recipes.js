@@ -32,6 +32,8 @@
       desc: '修为 +4000', use: { exp: 4000 } },
     { id: 'pillDu', name: '渡厄丹', realm: 5, cost: { lingzhi: 4, herb: 6 }, work: 500, diff: 8, out: [1, 1],
       desc: '气血回满且上限 +10', use: { hp: 999, hpMax: 10 } },
+    { id: 'pillHu', name: '护体丹', realm: 4, cost: { herb: 3, yaodan2: 1 }, work: 420, diff: 5, out: [1, 2],
+      desc: '渡劫容错带宽 +16%（每劫至多三粒，自动受用）', use: {} },
     { id: 'pillTai', name: '太初灵丹', realm: 7, cost: { lingzhi: 8, herb: 12 }, work: 700, diff: 9, out: [1, 1],
       desc: '全属性 +5', use: { statAll: 5 } },
   ];
@@ -75,8 +77,8 @@
     { id: 'qingxin', name: '清心阵', flags: 2, radius: 9, effect: { moodRegen: 1 }, desc: '范围内弟子心境渐复' },
     { id: 'yinqi', name: '引气阵', flags: 3, radius: 8, effect: { cult: 0.15 }, desc: '范围内打坐修炼 +15%' },
     { id: 'cangfeng', name: '藏风阵', flags: 3, radius: 9, effect: { fengUp: 1 }, desc: '范围内房间风水升一档' },
-    { id: 'yudi', name: '御敌阵', flags: 4, radius: 12, effect: {}, desc: '御敌护山（P4 实装）', locked: 'P4' },
-    { id: 'hushan', name: '护山大阵', flags: 6, radius: 20, effect: {}, desc: '门派屏障（P4 实装）', locked: 'P4' },
+    { id: 'yudi', name: '御敌阵', flags: 4, radius: 12, effect: {}, desc: '御敌护山：守御加成' },
+    { id: 'hushan', name: '护山大阵', flags: 6, radius: 20, effect: {}, desc: '门派屏障：渡劫免伤一击' },
   ];
 
   // ---- 五大天地灵植（每图限一株）----

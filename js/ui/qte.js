@@ -4,6 +4,7 @@
   const ART2MODE = { dan: 'fire', qi: 'hammer', fu: 'brush' };
 
   Q.open = function (art, recipeName, resolve) {
+    const old = document.getElementById('modal'); if (old) old.remove();
     const mode = ART2MODE[art];
     const wrap = document.createElement('div');
     wrap.id = 'modal';
@@ -149,6 +150,79 @@
       })();
     }
   };
+
+/* —— P5 天劫·九霄雷条：每道雷一条横向时机条，指针扫动，按键/点击判定 —— */
+Q.lei = function (opt, resolve) {
+  const oldM = document.getElementById('modal'); if (oldM) oldM.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'modal';
+  wrap.innerHTML = `<div class="mbox" style="width:520px"><h3 style="color:var(--zhu)">天劫·第${opt.no}劫 <small>${opt.name} 顶雷</small></h3>
+    <canvas id="qte-c" width="460" height="200"></canvas>
+    <div class="qte-tip" id="qte-tip">指针行至<b style="color:var(--zhu)">朱红护体带</b>内按下！共 ${opt.bolts} 道雷（空格/点击）</div>
+    <div id="lei-hits" style="min-height:20px;font-size:12px;color:var(--zhong);letter-spacing:1px"></div></div>`;
+  document.body.appendChild(wrap);
+  const cv = wrap.querySelector('#qte-c'), g = cv.getContext('2d');
+  const K = X.Ink;
+  const zw = opt.prep.width;          // 护体带宽 0~0.62
+  const hitBox = wrap.querySelector('#lei-hits');
+  let p = 0, dir = 1, bolt = 0, speed = 0.021 / opt.prep.slow, raf = 0;
+  const hits = [];
+  const strike = () => {
+    const off = Math.abs(p - 0.5);
+    const h = off < zw / 2 ? 'in' : off < zw / 2 + 0.09 ? 'edge' : 'out';
+    hits.push(h);
+    if (h === 'in') speed *= 1.06;   // 借力：下道雷更慢
+    bolt++;
+    hitBox.innerHTML += `<span style="color:${h === 'in' ? '#3d7a52' : h === 'edge' ? 'var(--dan)' : 'var(--zhu)'}">${h === 'in' ? '借力' : h === 'edge' ? '擦身' : '雷贯'} </span>`;
+    if (bolt >= opt.bolts) return done();
+    wrap.querySelector('#qte-tip').innerHTML = `第 ${bolt + 1}/${opt.bolts} 道——稳住！`;
+  };
+  let doneCalled = false;
+  const done = () => {
+    if (doneCalled) return;
+    doneCalled = true;
+    cancelAnimationFrame(raf);
+    wrap.remove();
+    document.removeEventListener('keydown', key);
+    resolve(hits);
+  };
+  const key = e => { if (e.code === 'Space') { e.preventDefault(); strike(); } };
+  wrap.onclick = strike;
+  document.addEventListener('keydown', key);
+  (function loop() {
+    raf = requestAnimationFrame(loop);
+    // 纸底
+    g.fillStyle = K.paper; g.fillRect(0, 0, 460, 200);
+    // 雷云
+    g.fillStyle = 'rgba(43,40,34,.12)';
+    for (let i = 0; i < 5; i++) {
+      g.beginPath();
+      g.ellipse(60 + i * 88, 34 + Math.sin(Date.now() / 400 + i) * 5, 42, 20, 0, 0, 7);
+      g.fill();
+    }
+    g.strokeStyle = K.a(K.jiao, 0.7); g.lineWidth = 2;
+    g.beginPath(); g.moveTo(460 / 2, 56); g.lineTo(460 / 2 + Math.sin(Date.now() / 90) * 60, 88); g.stroke();
+    // 时机条
+    const bx = 30, bw = 400, by = 120, bh = 34;
+    g.fillStyle = K.a(K.qing, 0.4); g.fillRect(bx, by, bw, bh);
+    g.fillStyle = K.a(K.zhu, 0.55); g.fillRect(bx + bw * (0.5 - zw / 2), by, bw * zw, bh);
+    g.strokeStyle = K.zhu; g.lineWidth = 2;
+    g.strokeRect(bx + bw * (0.5 - zw / 2), by, bw * zw, bh);
+    g.strokeStyle = K.jiao; g.lineWidth = 1;
+    g.strokeRect(bx, by, bw, bh);
+    // 指针
+    p += speed * dir;
+    if (p > 1) { p = 1; dir = -1; } else if (p < 0) { p = 0; dir = 1; }
+    g.fillStyle = K.jiao;
+    g.beginPath(); g.moveTo(bx + bw * p, by - 6); g.lineTo(bx + bw * p - 5, by - 14); g.lineTo(bx + bw * p + 5, by - 14); g.closePath(); g.fill();
+    g.fillRect(bx + bw * p - 1, by, 2, bh);
+    // 进度雷珠
+    for (let i = 0; i < opt.bolts; i++) {
+      g.fillStyle = i < bolt ? K.zhu : K.a(K.zhong, 0.5);
+      g.beginPath(); g.arc(bx + 10 + i * 18, 176, 5, 0, 7); g.fill();
+    }
+  })();
+};
 
   X.QTE = Q;
 })(globalThis.XIANG);

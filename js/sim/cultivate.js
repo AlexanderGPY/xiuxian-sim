@@ -96,7 +96,8 @@
     const R = X.Realms;
     if (d.realm === 1) {   // 练气 → 筑基
       if (!d.eligible || !d.scId) return { ok: false, why: '未择典' };
-    } else if (!R.atCap(d)) return { ok: false, why: '修为未满' };
+    } else if (d.realm === 9) return { ok: false, why: '天劫将至' };   // 渡劫境走天劫（X.Trib）
+    else if (!R.atCap(d)) return { ok: false, why: '修为未满' };
     if (d.breakCd > X.Time.day) return { ok: false, why: '冷却' };
 
     const chance = Math.min(0.95, C.chanceOf(d) + (X.Craft ? X.Craft.brkBoost(d) : 0));
@@ -117,6 +118,11 @@
     }
     d.failPity++;
     d.breakCd = X.Time.day + 2;
+    if (d.realm === 8) {   // 大乘冲渡劫：失败即陨（护符/丹已在 chance 前用尽）
+      X.Game.kill(d, '大乘冲关失败，坐化于阵前');
+      X.Bus.emit('cult:break', { d, ok: false });
+      return { ok: false, why: '身陨' };
+    }
     if (d.mood < 30) {
       d.moodEv -= 18; d.breakCd = X.Time.day + 3;
       X.Game.log(`${d.name} 破境失败，走火入魔（心境大损）`);
