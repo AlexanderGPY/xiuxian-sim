@@ -20,6 +20,7 @@
         case 'harvest': buff.yieldMult = 1.2; buff.until = X.Time.day + 10; break;
         case 'frost':
           X.Build.each(b => { if (b.farm && b.farm.planted && !b.farm.ready) b.farm.prog = Math.max(0, b.farm.prog - 3); });
+          if (X.Combat) X.Combat.vanguard();   // 妖兽南下前哨
           break;
         case 'visit': G.tryVisitor(t.n); break;
         case 'mood': X.Disciple.list.forEach(d => { d.moodEv += 8; }); break;

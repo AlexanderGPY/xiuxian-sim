@@ -316,6 +316,38 @@
         g.fillStyle = X.Ink.zhu;
         g.beginPath(); g.arc(cx, h * 0.3, 1.6, 0, 7); g.fill();
       }
+    } else if (kind === 'gate') {    // 山门：双柱牌坊
+      g.strokeStyle = K().jiao; g.lineWidth = 1.8;
+      g.beginPath();
+      g.moveTo(w * 0.14, h * 0.94); g.lineTo(w * 0.14, h * 0.2);
+      g.moveTo(w * 0.86, h * 0.94); g.lineTo(w * 0.86, h * 0.2);
+      g.stroke();
+      roofMini(g, cx, h * 0.24, w * 1.04, h * 0.34, K().watt);
+      g.strokeStyle = K().a(K().jiao, 0.7); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(w * 0.14, h * 0.48); g.lineTo(w * 0.86, h * 0.48); g.stroke();
+      g.fillStyle = K().gold;
+      g.font = `${Math.max(9, 11)}px "Kaiti SC",serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('云隐', cx, h * 0.68);
+    } else if (kind === 'guest') {   // 客舍：屋+迎宾榻
+      walls(g, w * 0.08, h * 0.44, w * 0.84, h * 0.46, '#d5c9ac');
+      roofMini(g, cx, h * 0.46, w * 0.96, h * 0.4, K().thatch);
+      doorDot(g, cx, h * 0.9, w * 0.22, h * 0.3);
+      const hosted = X.Relation ? X.Relation.guests().length : 0;
+      if (hosted) {   // 客卿在舍：月白人影
+        g.fillStyle = K().a(K().robe2, 0.85);
+        g.beginPath(); g.arc(w * 0.74, h * 0.62, 2.6, 0, 7); g.fill();
+        g.beginPath(); g.ellipse(w * 0.74, h * 0.74, 2.2, 3.4, 0, 0, 7); g.fill();
+      }
+    } else if (kind === 'lib') {     // 藏经阁：两层小楼
+      walls(g, w * 0.1, h * 0.5, w * 0.8, h * 0.42, '#cfc3a4');
+      walls(g, w * 0.18, h * 0.24, w * 0.64, h * 0.26, '#ddd2b4');
+      roofMini(g, cx, h * 0.26, w * 0.86, h * 0.26, K().watt);
+      roofMini(g, cx, h * 0.52, w * 0.98, h * 0.28, K().watt);
+      // 经卷格窗
+      g.strokeStyle = K().a(K().jiao, 0.55); g.lineWidth = 0.6;
+      for (let i = 0; i < 3; i++) g.strokeRect(w * (0.28 + i * 0.16), h * 0.56, w * 0.1, h * 0.14);
+      doorDot(g, cx, h * 0.92, w * 0.18, h * 0.26);
     } else if (kind === 'bed') {     // 床榻：架+被+枕
       g.fillStyle = '#c9b492';
       g.fillRect(w * 0.08, h * 0.2, w * 0.84, h * 0.68);
@@ -680,6 +712,69 @@
   }
 
   /* ---------- 每帧合成 ---------- */
+  /* ---------- P4：妖兽 / 犯山者 / 山门 / 客舍 / 藏经阁 ---------- */
+  const BEAST_COL = ['#b8a04a', '#5a9a5a', '#5a8ab8', '#c86a4a', '#a8865a'];
+  function drawBeast(g, bs, r, z) {
+    const K = X.Ink;
+    const x = r.x + bs.x * T * z, y = r.y + bs.y * T * z;
+    const s = Math.max(0.8, (0.85 + bs.def.tier * 0.14) * z);
+    const col = bs.def.ancient ? K.zhu : BEAST_COL[bs.def.el];
+    // 墨影兽身
+    g.fillStyle = K.a(K.nong, 0.85);
+    g.beginPath();
+    g.moveTo(x - 7 * s, y + 1 * s);
+    g.quadraticCurveTo(x - 9 * s, y - 6 * s, x - 2 * s, y - 7 * s);
+    g.quadraticCurveTo(x + 5 * s, y - 8 * s, x + 7 * s, y - 2 * s);
+    g.quadraticCurveTo(x + 8 * s, y + 3 * s, x + 3 * s, y + 3.6 * s);
+    g.closePath(); g.fill();
+    // 兽目（属色）+ 双角（阶数越高越大）
+    g.fillStyle = col;
+    g.beginPath(); g.arc(x + 4.6 * s, y - 4.4 * s, 1.5 * s, 0, 7); g.fill();
+    g.strokeStyle = K.jiao; g.lineWidth = Math.max(0.8, 1.1 * s);
+    g.beginPath();
+    g.moveTo(x - 3 * s, y - 6.6 * s); g.lineTo(x - 4.5 * s, y - (8.5 + bs.def.tier) * s);
+    g.moveTo(x + 1 * s, y - 7.4 * s); g.lineTo(x + 2.2 * s, y - (9 + bs.def.tier) * s);
+    g.stroke();
+    // 血条
+    const hpPct = Math.max(0, bs.hp / bs.def.hp);
+    g.fillStyle = 'rgba(43,40,34,.3)';
+    g.fillRect(x - 8 * s, y - (13 + bs.def.tier) * s, 16 * s, 1.6 * s);
+    g.fillStyle = bs.def.ancient ? K.zhu : col;
+    g.fillRect(x - 8 * s, y - (13 + bs.def.tier) * s, 16 * s * hpPct, 1.6 * s);
+    if (bs.flee) { g.fillStyle = K.a(K.zhong, 0.8); g.font = `${9 * z}px serif`; g.textAlign = 'center'; g.fillText('遁', x, y - 15 * s); }
+  }
+  function drawRaider(g, rd, r, z) {
+    const K = X.Ink;
+    const x = r.x + rd.x * T * z, y = r.y + rd.y * T * z;
+    const s = Math.max(0.8, 0.95 * z);
+    g.fillStyle = 'rgba(43,40,34,.18)';
+    g.beginPath(); g.ellipse(x, y + 6 * s, 7 * s, 2.4 * s, 0, 0, 7); g.fill();
+    // 深衣 + 朱绦（来犯者标记）
+    g.fillStyle = '#6a4a3a';
+    g.beginPath();
+    g.moveTo(x - 4.6 * s, y - 8 * s);
+    g.quadraticCurveTo(x - 7 * s, y + 3 * s, x - 5 * s, y + 5.4 * s);
+    g.quadraticCurveTo(x, y + 7.4 * s, x + 5 * s, y + 5.4 * s);
+    g.quadraticCurveTo(x + 7 * s, y + 3 * s, x + 4.6 * s, y - 8 * s);
+    g.closePath(); g.fill();
+    g.strokeStyle = K.a(K.jiao, 0.75); g.lineWidth = 0.9; g.stroke();
+    g.strokeStyle = X.Ink.zhu; g.lineWidth = 1.5 * s;
+    g.beginPath(); g.moveTo(x - 4 * s, y - 1.5 * s); g.lineTo(x + 4 * s, y - 1.5 * s); g.stroke();
+    g.fillStyle = K.skin;
+    g.beginPath(); g.arc(x, y - 11.5 * s, 3.4 * s, 0, 7); g.fill();
+    g.strokeStyle = K.a(K.jiao, 0.7); g.lineWidth = 0.8; g.stroke();
+    // 血条
+    const hpPct = Math.max(0, rd.hp / (200 + rd.def.realm * 120));
+    g.fillStyle = 'rgba(43,40,34,.3)';
+    g.fillRect(x - 8 * s, y - 18 * s, 16 * s, 1.6 * s);
+    g.fillStyle = X.Ink.zhu;
+    g.fillRect(x - 8 * s, y - 18 * s, 16 * s * hpPct, 1.6 * s);
+    if (z > 1.0) {
+      g.fillStyle = X.Ink.zhu; g.font = `${9 * z}px "Kaiti SC",serif`; g.textAlign = 'center';
+      g.fillText(rd.def.name, x, y - 21 * s);
+    }
+  }
+
   Dyn.draw = function (g, r, z) {
     const now = performance.now();
     // 建筑
@@ -700,6 +795,11 @@
     }
     // 弟子
     for (const d of X.Disciple.list) drawDisciple(g, d, r, z);
+    // P4 妖兽 / 犯山者
+    if (X.Combat) {
+      for (const bs of X.Combat.beasts) drawBeast(g, bs, r, z);
+      for (const rd of X.Combat.raiders) drawRaider(g, rd, r, z);
+    }
     // 特效
     drawFX(g, r, z, now);
     // 选中建筑高亮

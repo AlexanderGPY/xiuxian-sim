@@ -42,9 +42,14 @@
     X.Inv.reset();
     X.Work.clear();
     if (X.Craft) X.Craft.reset();
+    if (X.Combat) X.Combat.reset();
+    if (X.Travel) X.Travel.reset();
+    if (X.Relation) X.Relation.reset();
+    if (X.Auction) X.Auction.reset();
     X.Feng._dirty = true;
     if (X.Form) X.Form._dirty = true;
     X.Solar.buff = { growthMult: 1, yieldMult: 1, cold: 0, until: 0 };
+    G.repVal = 10; G.found = []; G.libBuilt = false; G.hallBuilt = false;
 
     if (seed !== undefined) X.rng = X.Rng(seed);
     if (!X.Map.seed || seed !== undefined) { X.Map.mut = {}; X.Map.generate(seed); }
@@ -73,7 +78,37 @@
     G.inited = true;
     G.log('云隐山门立足，三名杂役入册');
   };
-  X.Bus.on('build:done', () => { if (G.inited) G.stats.buildingsDone++; });
+  X.Bus.on('build:done', () => {
+    if (!G.inited) return;
+    G.stats.buildingsDone++;
+    scanLandmarks();
+  });
+
+  // ---- P4 江湖：声望 / 残卷 / 楼阁 ----
+  G.repVal = 10; G.found = []; G.libBuilt = false; G.hallBuilt = false;
+  G.rep = () => G.repVal | 0;
+  G.addRep = function (n) {
+    G.repVal = Math.max(0, Math.min(999, (G.repVal || 0) + n));
+  };
+  function scanLandmarks() {
+    G.libBuilt = false; G.hallBuilt = false;
+    X.Build.each(b => {
+      if (!b.built) return;
+      if (b.def.id === 'library') G.libBuilt = true;
+      if (b.def.id === 'hall') G.hallBuilt = true;
+    });
+  }
+  G.libBonus = () => (G.libBuilt ? 0.05 : 0);
+  // 游历所得残卷（含拍卖）：随机一部未得之典
+  G.findScroll = function () {
+    const owned = new Set(X.Disciple.list.map(d => d.scId).filter(Boolean));
+    const pool = X.Scriptures.list.filter(s => s.locked && !owned.has(s.id) && G.found.indexOf(s.id) < 0);
+    if (!pool.length) { X.Inv.add('ling', 20); X.Game.log('残卷与已有典籍重合，折灵石二十'); return null; }
+    const s = X.rng.pick(pool);
+    G.found.push(s.id);
+    X.Game.log(`喜得残卷《${s.name}》（${{ 8: '八品', 4: '四品', 2: '二品' }[s.tier]}），藏经阁可研读`);
+    return s;
+  };
 
   G.tick = function () {
     if (!G.inited) return;
@@ -137,7 +172,11 @@
     }
     X.Inv.add('wood', 2);   // 没找到地方，退料
   };
-  X.Bus.on('time:day', () => { if (G.inited) G.autoFarm(); });
+  X.Bus.on('time:day', () => {
+    if (!G.inited) return;
+    G.autoFarm();
+    if (X.Combat) X.Combat.tryWave(X.Time.day);   // 妖潮
+  });
 
   // 平均心境 / 人口
   G.avgMood = () => {
@@ -153,6 +192,12 @@
     stats: { ...G.stats },
     solar: { ...X.Solar.buff },
     craft: X.Craft ? X.Craft.snapshot() : null,
+    rep: G.repVal,
+    found: [...G.found],
+    combat: X.Combat ? X.Combat.snapshot() : null,
+    travel: X.Travel ? X.Travel.snapshot() : null,
+    relation: X.Relation ? X.Relation.snapshot() : null,
+    auction: X.Auction ? X.Auction.snapshot() : null,
   });
   G.restore = function (o) {
     G.home = o.home || [40, 30];
@@ -162,8 +207,15 @@
     X.Disciple.restore(o.disciples || []);
     Object.assign(X.Solar.buff, o.solar || {});
     if (X.Craft) X.Craft.restore(o.craft || {});
+    G.repVal = o.rep !== undefined ? o.rep : 10;
+    G.found = o.found || [];
+    if (X.Combat) X.Combat.restore(o.combat || {});
+    if (X.Travel) X.Travel.restore(o.travel || {});
+    if (X.Relation) X.Relation.restore(o.relation || {});
+    if (X.Auction) X.Auction.restore(o.auction || {});
     G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0 }, o.stats);
     scanTerrain();
+    scanLandmarks();
     X.Work.clear();
     X.Feng._dirty = true;
     if (X.Form) X.Form._dirty = true;

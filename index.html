@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>云隐仙踪 · P3 百艺俱全</title>
+<title>云隐仙踪 · P4 江湖已远</title>
 <script>
   /* 最早的错误捕获：任何脚本异常都记入 window.__errs，供排查与 __G 读取 */
   window.__errs = [];
@@ -143,6 +143,21 @@
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
     border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:6px}
   #btn-feng.on{background:var(--hua);border-color:var(--hua);color:var(--paper)}
+  #btn-travel,#btn-jianghu,#btn-market{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
+    background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
+    border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:4px}
+  #btn-travel:hover,#btn-jianghu:hover,#btn-market:hover{border-color:var(--nong);color:var(--jiao)}
+  #btn-travel.alert,#btn-market.alert{color:var(--zhu);border-color:var(--zhu)}
+  .lotrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed rgba(106,95,76,.3)}
+  .lotrow b{font-size:14px;color:var(--jiao);font-weight:normal;min-width:120px}
+  .lotrow .ldesc{font-size:11px;color:var(--dan);flex:1}
+  .lotrow .price{font-size:13px;color:var(--zhu)}
+  .locrow{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px dashed rgba(106,95,76,.22)}
+  .locrow b{font-size:13.5px;color:var(--jiao);font-weight:normal;min-width:74px}
+  .locrow span{font-size:11px;color:var(--dan)}
+  .sectrow{padding:7px 0;border-bottom:1px dashed rgba(106,95,76,.3);font-size:12.5px;color:var(--zhong)}
+  .grudgebar{display:inline-block;width:90px;height:6px;background:rgba(106,95,76,.15);border-radius:3px;overflow:hidden;vertical-align:middle;margin:0 6px}
+  .grudgebar i{display:block;height:100%;background:var(--zhu)}
 
   /* ---- 择典弹窗 ---- */
   #modal{position:absolute;inset:0;background:rgba(43,40,34,.5);z-index:30;
@@ -176,7 +191,7 @@
 
 <div id="topbar">
   <div class="seal">云隐</div>
-  <div class="title">云隐仙踪<small>P3 · 百艺俱全</small></div>
+  <div class="title">云隐仙踪<small>P4 · 江湖已远</small></div>
   <div id="res"></div>
   <div id="date">—</div>
   <div id="speed">
@@ -192,6 +207,9 @@
     <button id="btn-new">新局</button>
   </div>
   <button id="btn-feng" style="display:none" title="观星台·风水视图">☰ 风水</button>
+  <button id="btn-travel" title="派遣修士游历九州">游历</button>
+  <button id="btn-jianghu" title="门派恩怨·客卿">江湖</button>
+  <button id="btn-market" title="坊市拍卖·售货">坊市</button>
 </div>
 
 <div id="left">
@@ -234,6 +252,9 @@
 <script src="js/db/scriptures.js"></script>
 <script src="js/db/recipes.js"></script>
 <script src="js/db/solar.js"></script>
+<script src="js/db/world.js"></script>
+<script src="js/db/npcs.js"></script>
+<script src="js/db/events.js"></script>
 <script src="js/sim/path.js"></script>
 <script src="js/sim/inventory.js"></script>
 <script src="js/sim/build.js"></script>
@@ -243,6 +264,10 @@
 <script src="js/sim/buff.js"></script>
 <script src="js/sim/craft.js"></script>
 <script src="js/sim/spiritplant.js"></script>
+<script src="js/sim/combat.js"></script>
+<script src="js/sim/travel.js"></script>
+<script src="js/sim/relation.js"></script>
+<script src="js/sim/auction.js"></script>
 <script src="js/sim/farm.js"></script>
 <script src="js/sim/disciple.js"></script>
 <script src="js/sim/work.js"></script>
@@ -296,7 +321,7 @@
 
   X.Tick.start();
   if (window.__errs && __errs.length) X.log('启动期错误:', __errs);
-  X.log('P3 百艺俱全就绪', { version: X.VERSION });
+  X.log('P4 江湖已远就绪', { version: X.VERSION });
 })(XIANG);
 </script>
 </body>

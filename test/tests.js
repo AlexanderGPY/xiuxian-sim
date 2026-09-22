@@ -316,6 +316,143 @@
     return `法宝${nArt} 灵植${sp} ✓`;
   });
 
+  // ---- P4 江湖已远 ----
+  function makeXiu(d, realm, stage, scId) {
+    d.kind = '修士'; d.realm = realm || 2; d.stage = stage || 0;
+    d.scId = scId || 'ruijin'; d.hp = X.Disciple.maxHp(d);
+    return d;
+  }
+  t('P4:世界·事件池·妖兽图鉴规模', () => {
+    if (X.World.list.length !== 20) throw new Error('地点数 ' + X.World.list.length);
+    if (X.Events.list.length < 150) throw new Error('事件池 ' + X.Events.list.length);
+    if (X.Npcs.list.length !== 18) throw new Error('NPC ' + X.Npcs.list.length);
+    if (X.Combat.defs.length !== 24) throw new Error('妖兽 ' + X.Combat.defs.length);
+    const ids = new Set(X.Events.list.map(e => e.id));
+    if (ids.size !== X.Events.list.length) throw new Error('事件 id 重复');
+    return `20地点 / ${X.Events.list.length}事件 / 18人物 / 24妖兽 ✓`;
+  });
+  t('P4:游历全流程(委派→记闻→归山)', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    const L = X.Disciple.list;
+    makeXiu(L[0], 3, 0); makeXiu(L[1], 2, 1);
+    const rep0 = X.Game.rep();
+    const r = X.Travel.start('linjiang', [L[0].id, L[1].id]);
+    if (!r.ok) throw new Error('启程失败: ' + r.why);
+    if (L[0].travel !== r.ex.id) throw new Error('离山标记缺失');
+    X.Tick.pump(11 * X.Time.ticksPerDay);
+    if (X.Travel.list.some(e => e.id === r.ex.id)) throw new Error('11 日后仍未归山(往返 8 日)');
+    if (L[0].travel || L[1].travel) throw new Error('归山后 travel 未清');
+    if (!X.Travel.log.length) throw new Error('全程无记闻');
+    if (X.Game.rep() <= rep0) throw new Error('声望未增');
+    return `记闻${X.Travel.log.length}则 声望${rep0}→${X.Game.rep()} ✓`;
+  });
+  t('P4:妖潮首波·修士迎战斩妖', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    makeXiu(X.Disciple.list[0], 6, 0);
+    X.Game.addRep(20);   // 声望≥25 方引妖潮
+    X.Time.day = 59; X.Time.dayOfYear = 59;
+    X.Tick.pump(1 * X.Time.ticksPerDay + 60);
+    if (X.Combat.wave !== 1) throw new Error('第 60 日应有首波妖潮，得 wave=' + X.Combat.wave);
+    if (!X.Combat.beasts.length) throw new Error('妖潮未生成妖兽');
+    X.Tick.pump(6 * X.Time.ticksPerDay);
+    if (X.Combat.beasts.filter(b => !b.flee).length) throw new Error('6 日后仍有妖兽在山');
+    if (X.Combat.killed < 1) throw new Error('未斩杀任何妖兽（seed 需调整）');
+    if (X.Inv.count('yaodan1') + X.Inv.count('yaodan2') < 1) throw new Error('未获妖丹');
+    return `第${X.Combat.wave}波 斩妖${X.Combat.killed} 得妖丹 声望${X.Game.rep()} ✓`;
+  });
+  t('P4:战力公式方向正确', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    const a = makeXiu(X.Disciple.list[0], 5, 2);
+    const b = X.Disciple.list[1];
+    if (!(X.Combat.power(a) > X.Combat.power(b) * 1.5)) throw new Error('高境界战力未显著领先');
+    const d0 = X.Combat.defenseBonus();
+    const [hx, hy] = X.Game.home;
+    X.Build.place('gate', hx + 5, hy + 2, { instant: true, free: true });
+    if (X.Combat.defenseBonus() <= d0) throw new Error('山门未提升守御');
+    return `高境战力${X.Combat.power(a).toFixed(0)} 山门守御+${((X.Combat.defenseBonus() - d0) * 100).toFixed(0)}% ✓`;
+  });
+  t('P4:缘分客卿驻山增益', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    const [hx, hy] = X.Game.home;
+    X.Build.place('guesthall', hx + 4, hy - 3, { instant: true, free: true });
+    X.Game.addRep(50);
+    X.Relation.meet('qingyun');
+    X.Relation.change('qingyun', 110);
+    const gs = X.Relation.guests();
+    if (!gs.length) throw new Error('好感满+客舍+声望≥40 仍未有客卿');
+    if (X.Relation.buff().atk <= 0) throw new Error('客卿增益未生效');
+    return `${gs[0].npc.name} 驻山（${gs[0].npc.buff.label}）✓`;
+  });
+  t('P4:恩怨犯山·阵前化解', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    makeXiu(X.Disciple.list[0], 7, 1);
+    X.Time.day = 40; X.Time.dayOfYear = 40;
+    X.Relation.grudgeChange('chiyang', 100);
+    X.Tick.pump(1 * X.Time.ticksPerDay + 100);
+    if (!X.Combat.raiders.length) throw new Error('仇怨满未触发犯山');
+    X.Tick.pump(10 * X.Time.ticksPerDay);
+    if (X.Combat.raiders.length) throw new Error('10 日后犯山者未退');
+    if (X.Relation.sects.chiyang.grudge >= 100) throw new Error('战后仇怨未消减');
+    return `犯山来袭 化解仇怨至${X.Relation.sects.chiyang.grudge} ✓`;
+  });
+  t('P4:拍卖竞价购得拍品', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    X.Game.addRep(60);
+    X.Inv.add('ling', 800);
+    X.Time.day = 74; X.Time.dayOfYear = 74;
+    X.Tick.pump(1 * X.Time.ticksPerDay + 60);
+    if (!X.Auction.active) throw new Error('第 75 日声望 60+ 未开拍');
+    const lot = X.Auction.lots[0];
+    const before = X.Inv.count('ling');
+    const bid = X.Auction.bid(lot.id);
+    if (!bid.ok) throw new Error('竞价失败: ' + bid.why);
+    if (X.Inv.count('ling') !== before - bid.price) throw new Error('灵石未扣除');
+    const found0 = X.Game.found.length, art0 = X.Craft.artifacts.length;
+    const seed0 = X.Recipes.splant.reduce((s, p) => s + X.Inv.count(p.seed), 0);
+    X.Tick.pump(3 * X.Time.ticksPerDay);
+    if (X.Auction.active) throw new Error('会期两日后未收槌');
+    const got = X.Game.found.length > found0 || X.Craft.artifacts.length > art0 ||
+      X.Recipes.splant.reduce((s, p) => s + X.Inv.count(p.seed), 0) > seed0 ||
+      X.Inv.count('yaodan2') + X.Inv.count('yaodan3') + X.Inv.count('lingzhi') > 0;
+    if (!got) throw new Error('未拍到任何东西');
+    return `出价${bid.price}灵石 成交交割 ✓`;
+  });
+  t('P4:游历得典可入藏经阁', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    const sc = X.Game.findScroll();
+    if (!sc || !sc.locked) throw new Error('未抽到未解锁之典');
+    if (X.Game.found.indexOf(sc.id) < 0) throw new Error('残卷未入藏');
+    const sc2 = X.Game.findScroll();
+    if (sc2 && sc2.id === sc.id) throw new Error('残卷重复');
+    return `《${sc.name}》入库 ✓`;
+  });
+  t('P4:存档v5江湖往返', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    makeXiu(X.Disciple.list[0], 3, 0);
+    X.Travel.start('wuyin', [X.Disciple.list[0].id]);
+    X.Game.addRep(33);
+    X.Relation.change('luoxia', 45);
+    X.Combat.wave = 4; X.Combat.killed = 7;
+    const snap = JSON.parse(JSON.stringify(X.Save.snapshot()));
+    if (snap.ver !== 5) throw new Error('版本号 ' + snap.ver);
+    X.Game.init(2);
+    X.Save.restore(snap);
+    if (X.Game.rep() !== 43) throw new Error('声望不一致: ' + X.Game.rep());
+    if (!X.Travel.list.length) throw new Error('在途队伍丢失');
+    if (!X.Disciple.list.some(d => d.travel)) throw new Error('离山标记丢失');
+    if (X.Relation.sects.luoxia.aff !== 45) throw new Error('门派好感丢失');
+    if (X.Combat.wave !== 4 || X.Combat.killed !== 7) throw new Error('妖潮进度丢失');
+    return `声望43/在途1/好感45/妖潮4波 ✓`;
+  });
+
   // ---- 存档 ----
   t('存档:v2往返一致', () => {
     X.Time.reset(); X.Map.mut = {};

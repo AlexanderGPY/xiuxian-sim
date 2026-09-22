@@ -67,6 +67,7 @@
     const feng = st ? X.Feng.roomAt(st.x, st.y) : null;
     const fengM = feng ? feng.brkM : 1;
     let chance = 0.52 + d.stats.shen / 300 + skill * 0.05 + (fengM - 1) * 0.8 - r.diff * 0.045 + qte;
+    if (X.Relation) chance += art === 'dan' ? X.Relation.buff().dan : X.Relation.buff().qi;   // 客卿传艺
     chance = Math.max(0.05, Math.min(0.98, chance));
     const perfect = qte >= 0.3;
     d.craft[art] = Math.min(10, d.craft[art] + (perfect ? 0.6 : 0.4));
@@ -198,6 +199,21 @@
     C.artifacts = ((o && o.artifacts) || []).map(a => ({ ...a, affixes: (a.affixes || []).map(x => ({ ...x })) }));
     C.nextArt = (o && o.nextArt) || 1;
   };
+  // P4：拍卖直接购得已开光法宝
+  C.makeArt = function (rid) {
+    const r = X.Recipes.byId[rid];
+    if (!r) return null;
+    const pool = X.rng.shuffle(X.Recipes.AFFIX_POOL.slice()).slice(0, r.affix);
+    const artItem = {
+      iid: C.nextArt++, name: r.name, tier: r.realm,
+      affixes: pool.map(a => ({ k: a.k, n: a.n, desc: a.desc })),
+      holder: 0,
+    };
+    C.artifacts.push(artItem);
+    X.Game.log(`拍得法宝【${r.name}】（${artItem.affixes.map(a => a.n).join('·')}），入库存放`);
+    return artItem;
+  };
+
   C.reset = function () { C.orders = []; C.nextId = 1; C.artifacts = []; C.nextArt = 1; };
 
   X.Craft = C;

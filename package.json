@@ -1,7 +1,7 @@
 {
   "name": "xiuxian-sim",
   "private": true,
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "云隐仙踪 · 水墨修仙门派模拟器",
   "scripts": {
     "test": "node test/node-core.js"

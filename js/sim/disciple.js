@@ -223,6 +223,7 @@
 
   // ---- 每 tick 更新 ----
   D.update = function (d) {
+    if (d.travel) return;   // 游历在外：状态冻结（离山）
     const N = d.needs;
     const winter = X.Time.season === 3 ? 0.7 : 1;
     N.hunger -= 0.030 * winter * (D.hasTrait(d, 'ironbelly') ? 0.8 : 1);
@@ -257,8 +258,12 @@
     const t = d.task;
     if (!t) {
       if (d.kind === '修士') {
-        // 冲关 > 百艺委托 > 打坐
-        if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) startBreak(d);
+        // 妖兽/犯山 > 冲关 > 百艺委托 > 打坐
+        if (X.Combat && X.Combat.threat() && d.hp > X.Disciple.maxHp(d) * 0.35) {
+          d.task = { type: 'fight', phase: 'go' };
+          d.state = '迎敌';
+        }
+        else if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) startBreak(d);
         else {
           const order = X.Craft ? X.Craft.claim(d) : null;
           if (order) startCraft(d, order);
@@ -266,7 +271,18 @@
         }
       } else if (d.eligible && d.scId) {
         startBreak(d);   // 择典已毕的杂役：冲关筑基
-      } else d.state = '闲';
+      } else {
+        // 杂役不参战：妖兽近身则弃活避险
+        if (X.Combat && X.Combat.threat()) {
+          const bs = X.Combat.nearestBeast(d);
+          if (bs && Math.hypot(bs.x - d.px, bs.y - d.py) < 4 && d.task && d.task.job) {
+            X.Work.release(d.task.job, d);
+            d.task = null;
+            d.moodEv -= 2;
+          }
+        }
+        d.state = '闲';
+      }
       return;
     }
     if (t.phase === 'go') {
@@ -322,6 +338,25 @@
           X.Craft.finish(order, d, 0);
           d.task = null;
         }
+        break;
+      }
+      case 'fight': {
+        d.state = '斗法';
+        const r = X.Combat ? X.Combat.discTick(d) : false;
+        if (r === 'dead') { d.task = null; return; }   // 阵亡已由 Combat 处理
+        if (r === 'go') {
+          const tgt = d._fightTgt;
+          if (tgt) {
+            if (!t.path || !t.path.length || (d._repath | 0) <= X.Tick.count) {
+              d._repath = X.Tick.count + 40;
+              if (!setPath(d, tgt[0], tgt[1])) d.task = null;   // 无路可达：放弃此敌
+            }
+            if (t.path && t.path.length) walkStep(d);
+          }
+          // 目标消失/无敌可战
+          if (!tgt || (X.Combat && !X.Combat.threat())) d.task = null;
+        }
+        else if (!r) d.task = null;   // 战事已毕
         break;
       }
       default: {
@@ -399,7 +434,7 @@
     eligible: d.eligible, readyDay: d.readyDay, breakCd: d.breakCd, failPity: d.failPity,
     cultSpot: d.cultSpot, bornDay: d.bornDay,
     craft: { ...d.craft }, buffs: (d.buffs || []).map(b => ({ ...b })), artifact: d.artifact || 0,
-    hpMaxBuff: d.hpMaxBuff || 0, lifeBuff: d.lifeBuff || 0,
+    hpMaxBuff: d.hpMaxBuff || 0, lifeBuff: d.lifeBuff || 0, travel: d.travel || 0,
   }));
   D.restore = function (arr) {
     D.list = []; D.nextId = 1;
@@ -413,7 +448,7 @@
         eligible: !!r.eligible, readyDay: r.readyDay || 0, breakCd: r.breakCd || 0, failPity: r.failPity || 0,
         cultSpot: r.cultSpot || 0, bornDay: r.bornDay !== undefined ? r.bornDay : X.Time.day - 20 * 360,
         craft: r.craft || { dan: 0, qi: 0, fu: 0 }, buffs: r.buffs || [], artifact: r.artifact || 0,
-        hpMaxBuff: r.hpMaxBuff || 0, lifeBuff: r.lifeBuff || 0,
+        hpMaxBuff: r.hpMaxBuff || 0, lifeBuff: r.lifeBuff || 0, travel: 0,
       });
       D.list.push(d);
     }

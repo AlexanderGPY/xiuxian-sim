@@ -14,5 +14,11 @@
     seedShui: { name: '五色莲种', glyph: '种' },
     seedHuo:  { name: '赤焰果种', glyph: '种' },
     seedTu:   { name: '赭岩参种', glyph: '种' },
+    // P4 江湖
+    yaodan1:  { name: '劣品妖丹', glyph: '丹' },
+    yaodan2:  { name: '凡品妖丹', glyph: '丹' },
+    yaodan3:  { name: '上品妖丹', glyph: '丹' },
+    yaodan4:  { name: '极品妖丹', glyph: '丹' },
+    guDan:    { name: '上古内丹', glyph: '瞳' },
   };
 })(globalThis.XIANG);

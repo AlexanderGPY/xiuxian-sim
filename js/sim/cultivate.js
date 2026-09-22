@@ -25,11 +25,15 @@
     return sc.spells.filter((s, i) => X.Realms.SPELL_AT[i](d));
   };
   C.mods = function (d) {
-    const m = { cult: 0, brk: 0, mood: 0, work: 0, gat: 0, cook: 0, hp: 0 };
-    for (const s of C.spellsOn(d)) for (const k in s.eff) m[k] += s.eff[k];
+    const m = { cult: 0, brk: 0, mood: 0, work: 0, gat: 0, cook: 0, hp: 0, atk: 0, def: 0 };
+    for (const s of C.spellsOn(d)) for (const k in s.eff) m[k] = (m[k] || 0) + s.eff[k];
     if (X.Craft) {   // 法宝词条
       const a = X.Craft.artMods(d);
-      for (const k in a) m[k] += a[k];
+      for (const k in a) m[k] = (m[k] || 0) + a[k];
+    }
+    if (X.Relation) {   // 客卿驻山增益
+      const rb = X.Relation.buff();
+      m.cult += rb.cult; m.brk += rb.brk; m.mood += rb.mood; m.atk += rb.atk;
     }
     m.cult += X.Buffs.get(d, 'cult');   // 限时增益（凝神丹/修行符）
     return m;
@@ -55,7 +59,8 @@
     const mood = 0.6 + d.mood / 250;
     const m = C.mods(d);
     const active = d.kind === '修士' ? C.ACTIVE : C.PASSIVE * 2;
-    return active * tierM(d) * C.elMatch(d) * feng * qi * mood * (1 + m.cult + zhen);
+    const lib = X.Game && X.Game.libBonus ? X.Game.libBonus() : 0;   // 藏经阁
+    return active * tierM(d) * C.elMatch(d) * feng * qi * mood * (1 + lib) * (1 + m.cult + zhen);
   };
 
   // 吐纳（杂役闲时自动，不打断活计；筑基为止）

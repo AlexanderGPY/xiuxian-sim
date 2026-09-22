@@ -66,14 +66,16 @@
     { id: 'spHuo', name: '赤焰果树', cat: '灵植', w: 1, h: 1, cost: {}, work: 0, passable: true, kind: 'splant', glyph: '焰', el: 3, tags: { splant: 'spHuo' } },
     { id: 'spTu', name: '赭岩参', cat: '灵植', w: 1, h: 1, cost: {}, work: 0, passable: true, kind: 'splant', glyph: '参', el: 4, tags: { splant: 'spTu' } },
 
-    // ---- 后期锁定（展示用） ----
-    { id: 'library', name: '藏经阁', cat: '后期', w: 3, h: 3, cost: { wood: 24 }, work: 400, passable: false, kind: 'lock', glyph: '经', el: 1, tags: { lock: 'P4' } },
-    { id: 'hall', name: '传功殿', cat: '后期', w: 3, h: 3, cost: { wood: 20, stone: 12 }, work: 400, passable: false, kind: 'lock', glyph: '殿', el: 4, tags: { lock: 'P4' } },
+    // ---- P4 江湖：山门/客舍 + 藏经阁/传功殿落成 ----
+    { id: 'library', name: '藏经阁', cat: '道场', w: 3, h: 3, cost: { wood: 24, stone: 8 }, work: 400, passable: false, kind: 'lib', glyph: '经', el: 1, tags: { beauty: 3, library: 1 } },
+    { id: 'hall', name: '传功殿', cat: '道场', w: 3, h: 3, cost: { wood: 20, stone: 12 }, work: 400, passable: false, kind: 'obs', glyph: '殿', el: 4, tags: { beauty: 2, hall: 1 } },
+    { id: 'gate', name: '山门', cat: '结构', w: 2, h: 2, cost: { stone: 12, wood: 10 }, work: 160, passable: false, kind: 'gate', glyph: '门', el: 0, tags: { beauty: 2, defense: 1 } },
+    { id: 'guesthall', name: '客舍', cat: '起居', w: 2, h: 2, cost: { wood: 16 }, work: 120, passable: true, kind: 'guest', glyph: '客', el: 1, tags: { comfort: 2, guest: 1 } },
   ];
   X.Buildings = {
     list: D,
     byId: {},
-    cats: ['结构', '起居', '道场', '生产', '百艺', '仓储', '装饰', '卫生', '后期'],
+    cats: ['结构', '起居', '道场', '生产', '百艺', '仓储', '装饰', '卫生'],
   };
   for (const d of D) X.Buildings.byId[d.id] = d;
 })(globalThis.XIANG);

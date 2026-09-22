@@ -7,10 +7,18 @@
   // ---- 资源栏 ----
   function refreshRes() {
     const I = X.Inv;
+    const beasts = X.Combat ? X.Combat.beasts.filter(b => !b.flee).length : 0;
     el('res').innerHTML = ['wood', 'stone', 'grain', 'meal'].map(k =>
       `<span class="chip">${X.Items[k].glyph} ${I.count(k)}</span>`).join('') +
+      `<span class="chip">灵 ${I.count('ling')}</span>` +
+      `<span class="chip">名 ${X.Game.rep()}</span>` +
+      (beasts ? `<span class="chip bad">妖 ${beasts}</span>` : '') +
       `<span class="chip">人 ${X.Disciple.list.length}/12</span>` +
       `<span class="chip ${X.Game.avgMood() < 30 ? 'bad' : ''}">心境 ${X.Game.avgMood()}</span>`;
+    const mk = el('btn-market');
+    if (mk) mk.classList.toggle('alert', !!(X.Auction && X.Auction.active));
+    const tv = el('btn-travel');
+    if (tv) tv.classList.toggle('alert', !!beasts);
   }
 
   // ---- 建造菜单 ----
@@ -65,6 +73,17 @@
     if (sel.kind === 'disc') {
       const d = X.Disciple.list.find(o => o.id === sel.id);
       if (!d) { X.Dyn.sel = null; return; }
+      if (d.travel) {   // 游历在外
+        const ex = X.Travel ? X.Travel.list.find(e => e.id === d.travel) : null;
+        const loc = ex ? X.World.byId[ex.dest] : null;
+        const total = ex ? ex.days * 2 : 0;
+        const gone = ex ? (X.Time.day - ex.day0) + (ex.back ? ex.days : 0) : 0;
+        box.innerHTML = `<h3>${d.name} <small>离山</small></h3>
+          <div class="sub">${loc ? `远赴${loc.name}（${X.World.distName[loc.type]}·${'★'.repeat(loc.danger)}）` : ''}</div>
+          ${bar('行程', total ? gone / total * 100 : 0)}
+          <div class="sub">记闻 ${ex ? ex.events : 0} 则 · 斩妖 ${ex ? ex.kills : 0} 头</div>`;
+        return;
+      }
       const tr = d.traits.map(t => TRAIT_NAME(t)).join(' ');
       const S = d.stats;
       const R = X.Realms, Cu = X.Cult;
@@ -146,7 +165,11 @@
     const wrap = document.createElement('div');
     wrap.id = 'modal';
     wrap.innerHTML = `<div class="mbox"><h3>${d.name} 择典筑基 <small>道典终身不换（除夺舍）</small></h3>
-      <div class="mgrid">${X.Scriptures.starter.map(s => `
+      ${X.Game.found.length ? `<div class="sub" style="margin:4px 0;color:var(--hua)">游历所得残卷 ${X.Game.found.length} 部，与开局六典同列可择：</div>` : ''}
+      <div class="mgrid">${[
+        ...X.Scriptures.starter,
+        ...X.Game.found.map(id => X.Scriptures.byId[id]).filter(Boolean),
+      ].map(s => `
         <button class="scard" data-id="${s.id}">
           <b>《${s.name}》</b>
           <span>${s.el < 0 ? '无属' : X.Map.ELEM[s.el] + '属'}·${10 - s.tier}品 · 与其灵根：
@@ -327,6 +350,150 @@
     };
   }
 
+  /* ================= P4 江湖 ================= */
+  function openModal(title, bodyHtml) {
+    closeModal();
+    const wrap = document.createElement('div');
+    wrap.id = 'modal';
+    wrap.innerHTML = `<div class="mbox"><h3>${title}</h3><div id="modal-body">${bodyHtml}</div>
+      <button class="act" id="modal-close">合上</button></div>`;
+    document.body.appendChild(wrap);
+    el('modal-close').onclick = () => { H.modalKind = null; closeModal(); };
+    return wrap;
+  }
+  H.modalKind = null;
+  function rerenderModal() {
+    if (!H.modalKind || !el('modal')) return;
+    const body = el('modal-body');
+    if (!body) return;
+    const html = ({
+      travel: travelBody, jianghu: jianghuBody, market: marketBody,
+    })[H.modalKind]();
+    if (html !== null && html !== undefined) body.innerHTML = html;
+    wireModal();
+  }
+  function wireModal() {
+    const body = el('modal-body');
+    if (!body) return;
+    body.querySelectorAll('[data-go]').forEach(b =>
+      b.onclick = () => { H.travelDest = b.dataset.go; rerenderModal(); });
+    body.querySelectorAll('[data-setoff]').forEach(b =>
+      b.onclick = () => {
+        const ids = [...body.querySelectorAll('[data-pick]:checked')].map(x => +x.dataset.pick);
+        const r = X.Travel.start(H.travelDest, ids);
+        toast(r.ok ? '游历队伍启程' : r.why);
+        rerenderModal();
+      });
+    body.querySelectorAll('[data-bid]').forEach(b =>
+      b.onclick = () => {
+        const r = X.Auction.bid(+b.dataset.bid);
+        toast(r.ok ? `出价 ${r.price} 灵石，暂列头名` : r.why);
+        rerenderModal();
+      });
+    body.querySelectorAll('[data-sell]').forEach(b =>
+      b.onclick = () => {
+        const r = X.Auction.sell(b.dataset.sell);
+        toast(r.ok ? `售出${X.Items[r.item].name}×${r.n}，得灵石 ${r.ling}` : r.why);
+        rerenderModal();
+      });
+  }
+
+  // ---- 游历面板 ----
+  function travelBody() {
+    const act = X.Travel.list.map(e => {
+      const loc = X.World.byId[e.dest];
+      const party = e.party.map(i => (X.Disciple.list.find(d => d.id === i) || { name: '?' }).name).join('、');
+      const gone = (X.Time.day - e.day0) + (e.back ? e.days : 0);
+      return `<div class="sectrow">${loc.name} · ${party} · 第${Math.min(gone, e.days * 2)}/${e.days * 2}日${e.back ? ' · 归途' : ''} · 记闻${e.events} · 斩妖${e.kills}</div>`;
+    }).join('') || '<div class="hint" style="padding:6px 0">暂无队伍在外</div>';
+    let dest = '';
+    if (H.travelDest) {
+      const loc = X.World.byId[H.travelDest];
+      const cands = X.Disciple.list.filter(d => X.Travel.canGo(d));
+      dest = `<div style="margin:10px 0 4px;color:var(--hua)">遣队赴【${loc.name}】（往返约 ${loc.dist * 2} 日，每人耗 4 灵谷）</div>` +
+        (cands.length ? cands.map(d =>
+          `<label style="display:block;font-size:12.5px;color:var(--zhong);padding:2px 0">
+            <input type="checkbox" data-pick="${d.id}"> ${d.name} · ${X.Realms.realmName(d)} · 武${d.stats.wu} 神${d.stats.shen}</label>`).join('') +
+        `<button class="act small" data-setoff="1" style="margin-top:6px">启程</button>`
+          : '<div class="hint">无练气三层以上的修士可遣</div>');
+    }
+    const locs = X.World.list.map(l =>
+      `<div class="locrow"><b>${l.name}</b><span>${X.World.distName[l.type]}·${'★'.repeat(l.danger)}</span>
+        <span>往返${l.dist * 2}日</span><span style="flex:1">${l.desc}</span>
+        <button class="act small" data-go="${l.id}">遣队</button></div>`).join('');
+    const news = X.Travel.log.slice(0, 10).map(r =>
+      `<div class="hint" style="padding:2px 0">第${r.day}日 · ${r.dest} · ${r.name}（${r.opt}${r.ok ? '·成' : '·败'}）</div>`).join('');
+    return `<div style="margin-bottom:8px">声望 ${X.Game.rep()} · 在外队伍 ${X.Travel.list.length}/2</div>
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:6px 0">在途</div>${act}
+      ${dest}
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:10px 0 2px">九州（20 地）</div>${locs}
+      ${news ? `<div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:10px 0 2px">游历记闻</div>${news}` : ''}`;
+  }
+
+  // ---- 江湖面板 ----
+  function jianghuBody() {
+    const SECTS = Object.keys(X.Npcs.SECT_NAMES);
+    const rows = SECTS.map(s => {
+      const r = X.Relation.sects[s];
+      const guest = r.guest ? X.Npcs.byId[r.guest] : null;
+      return `<div class="sectrow"><b style="color:var(--jiao)">${X.Npcs.SECT_NAMES[s]}</b>
+        好感 <u class="${r.aff >= 60 ? 'good' : r.aff < 0 ? 'bad' : ''}">${X.Relation.affName(r.aff)} ${r.aff}</u>
+        仇怨<span class="grudgebar"><i style="width:${Math.min(100, r.grudge / 1.4)}%"></i></span>${r.grudge}
+        ${guest ? `<u class="good">客卿·${guest.name}（${guest.buff.label}）</u>` : (r.aff >= 100 ? '<span style="color:var(--dan)">待客卿（需客舍+声望40）</span>' : '')}
+      </div>`;
+    }).join('');
+    const st = X.Combat;
+    return `<div style="margin-bottom:6px">声望 ${X.Game.rep()}（拍卖入场 60 · 客卿 40 · 摆摊 20） · 妖潮第 ${st.wave}/12 波 · 累计斩妖 ${st.killed}</div>
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:6px 0">六派恩怨</div>${rows}
+      <div class="hint" style="margin-top:8px">游历拜访/切磋/救难增好感；途中冲突或拦截械斗结仇怨。仇怨满 100 触发犯山斗法——御器迎战可化解（不打不相识）。</div>`;
+  }
+
+  // ---- 坊市面板 ----
+  function marketBody() {
+    const A = X.Auction;
+    let lots = '';
+    if (A.active) {
+      lots = `<div style="font-size:13px;color:var(--zhu);letter-spacing:2px;margin:6px 0">万宝楼开槌中 · 会期还剩 ${A.dayLeft} 日（他人每日抬价）</div>` +
+        A.lots.map(l => `<div class="lotrow">
+          <b>${l.name}</b><span class="ldesc">${l.desc}</span>
+          <span class="price">现价 ${l.cur} 灵石</span>
+          ${l.mine ? '<u class="good">你暂列头名</u>' : `<button class="act small" data-bid="${l.id}">跟价 ${Math.round(l.cur * 1.12)}</button>`}
+        </div>`).join('');
+    } else {
+      const need = A.nextDay - X.Time.day;
+      lots = `<div class="hint" style="padding:6px 0">下一届拍卖约 ${need > 0 ? need + ' 日后' : '近日'}（第${A.nextDay}日，声望≥60 得请柬）</div>`;
+    }
+    const SELL = A.sellPrices();
+    const sellRow = Object.keys(SELL).map(k => {
+      const n = X.Inv.count(k);
+      return `<div class="locrow"><b>${X.Items[k].name}</b><span>存 ${n}</span><span style="flex:1">单价 ${SELL[k]} 灵石</span>
+        ${n > 0 && X.Game.rep() >= 20 ? `<button class="act small" data-sell="${k}">售${k === 'herb' ? 5 : 3}份</button>` : '<span style="color:var(--dan)">声望20方可摆摊</span>'}</div>`;
+    }).join('');
+    return `<div style="margin-bottom:6px">灵石 ${X.Inv.count('ling')}</div>${lots}
+      <div style="font-size:13px;color:var(--jiao);letter-spacing:2px;margin:10px 0 2px">摆摊售货（涨声望）</div>${sellRow}`;
+  }
+
+  function wireP4Buttons() {
+    el('btn-travel').onclick = () => {
+      if (H.modalKind === 'travel') { H.modalKind = null; return closeModal(); }
+      H.modalKind = 'travel'; H.travelDest = null;
+      openModal('游历九州', travelBody()); wireModal();
+    };
+    el('btn-jianghu').onclick = () => {
+      if (H.modalKind === 'jianghu') { H.modalKind = null; return closeModal(); }
+      H.modalKind = 'jianghu';
+      openModal('江湖恩怨', jianghuBody()); wireModal();
+    };
+    el('btn-market').onclick = () => {
+      if (H.modalKind === 'market') { H.modalKind = null; return closeModal(); }
+      H.modalKind = 'market';
+      openModal('坊市·万宝楼', marketBody()); wireModal();
+    };
+    X.Bus.on('auction:on', () => { toast('万宝楼开槌——坊市面板可竞价'); });
+    X.Bus.on('wave:on', w => { toast(`妖潮第 ${w} 波来袭！修士将自动迎敌`); });
+    X.Bus.on('raid:on', e => { toast(`${X.Npcs.SECT_NAMES[e.sect]}犯山：${e.names.join('、')}！`); });
+  }
+
   H.init = function () {
     refreshBuildMenu('结构');
     wireCanvas();
@@ -337,12 +504,14 @@
       H._mapT = setTimeout(() => X.Scene.render(), 150);   // 伐木/采石后重绘地形
     });
     refreshRes(); refreshSel();
+    wireP4Buttons();
     el('btn-feng').onclick = () => {
       X.Dyn.fengView = !X.Dyn.fengView;
       el('btn-feng').classList.toggle('on', X.Dyn.fengView);
     };
     setInterval(() => {
       refreshRes(); refreshSel(); refreshObsButton();
+      if (H.modalKind) rerenderModal();
       // 种子增减时刷新建造菜单
       const sig = X.Recipes.splant.map(s => X.Inv.count(s.seed)).join(',');
       if (sig !== H._seedSig) { H._seedSig = sig; refreshBuildMenu(); }
