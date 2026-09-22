@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>云隐仙踪 · 画风选型画廊（20 选 1）</title>
+<style>
+  :root{ --paper:#f4efe3; --ink:#1f1d1a; --dan:#8f8a80; --zhu:#a33b2e; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);font-family:"Kaiti SC","STKaiti",serif;color:var(--ink);padding:24px}
+  h1{font-size:24px;letter-spacing:6px}
+  h1 small{font-size:13px;color:var(--dan);letter-spacing:2px;margin-left:14px}
+  .tip{font-size:13px;color:var(--dan);margin:8px 0 18px;letter-spacing:1px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+  a.card{display:block;text-decoration:none;color:var(--ink);background:#fff;
+    border:1px solid rgba(31,29,26,.18);border-radius:8px;overflow:hidden;
+    transition:transform .12s, box-shadow .12s, border-color .12s}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(31,29,26,.16);border-color:var(--zhu)}
+  .shot{width:100%;height:134px;overflow:hidden;background:#111;position:relative}
+  .shot iframe{width:960px;height:600px;border:0;transform-origin:0 0;pointer-events:none}
+  .meta{padding:8px 10px 10px}
+  .meta b{font-size:15px;letter-spacing:1px}
+  .meta span{display:block;font-size:11.5px;color:var(--dan);margin-top:3px;line-height:1.5}
+  .meta i{display:inline-block;font-style:normal;font-size:10.5px;color:var(--zhu);border:1px solid rgba(163,59,46,.4);
+    border-radius:3px;padding:0 4px;margin-top:5px;margin-right:4px}
+</style>
+</head>
+<body>
+<h1>画风选型画廊<small>20 选 1 · 每张都含 环境 / 人物 / 道具 三要素 · 点击看大图</small></h1>
+<div class="tip">每页统一画：山、水、树（环境）+ 一名修士（人物）+ 丹 / 剑 / 葫芦（道具）。选定编号告诉我即可，我将按该画风重制整套渲染管线。</div>
+<div class="grid" id="grid"></div>
+<script>
+const STYLES = [
+  ['s01-pomo.html', '01 泼墨大写意', '大块浓淡泼墨+飞白+朱砂印，气势最足', '水墨激进版'],
+  ['s02-pixel.html', '02 像素复古', '16-bit 逐点绘制，亲和怀旧，图标动画最省力', '怀旧'],
+  ['s03-gongbi.html', '03 青绿工笔', '石青石绿矿色+金线勾勒，宋画精致感', '国风正统'],
+  ['s04-flat.html', '04 扁平国风', '大色块零描边海报构图，UI 最百搭', '现代干净'],
+  ['s05-dark.html', '05 暗黑仙侠', '压黑+边缘光+余烬，战斗氛围最强', '暗黑'],
+  ['s06-clay.html', '06 童趣黏土', '软糯圆角+柔影，治愈休闲向', '治愈'],
+  ['s07-doodle.html', '07 手绘涂鸦', '歪线重描+手写批注，轻松幽默', '轻松'],
+  ['s08-cyber.html', '08 赛博修仙', '霓虹线框+发光阵法，反差感拉满', '潮'],
+  ['s09-lowpoly.html', '09 低多边形', '三角面片平涂分色，几何现代美', '几何'],
+  ['s10-papercut.html', '10 剪纸窗花', '红纸镂空+分层投影，民俗喜庆', '民俗'],
+  ['s11-watercolor.html', '11 水彩晕染', '湿边扩散+淡彩叠加，柔和温柔', '温柔'],
+  ['s12-ukiyoe.html', '12 浮世绘版画', '普鲁士蓝平涂+爪浪，记忆点最强', '版画'],
+  ['s13-glass.html', '13 玻璃拟态', '磨砂玻璃卡+彩斑，UI 现代感最强', 'UI 向'],
+  ['s14-vaporwave.html', '14 蒸汽波', '紫粉渐变+条纹落日+网格', '潮流梗'],
+  ['s15-oneline.html', '15 极简一笔线', '一根连续线条+一个朱点，逼格最高', '极简'],
+  ['s16-iso.html', '16 等距仙居', '2:1 菱形地块悬浮岛，与建造最合拍', '建造向'],
+  ['s17-gameboy.html', '17 8-bit 掌机', '四阶绿大颗粒，极致复古情怀', '复古掌机'],
+  ['s18-celshaded.html', '18 国漫厚涂', '粗黑描边+平色+一档阴影，动作最强', '热血'],
+  ['s19-parchment.html', '19 古籍羊皮卷', '羊皮底+褐墨手绘图鉴，藏经阁天选', '图鉴向'],
+  ['s20-nightgreen.html', '20 夜宴青绿', '夜空青绿矿色+金边+流萤，高级感天花板', '高级感'],
+];
+const grid = document.getElementById('grid');
+for (const [file, name, desc, tag] of STYLES) {
+  const a = document.createElement('a');
+  a.className = 'card'; a.href = file; a.target = '_blank';
+  const shot = document.createElement('div'); shot.className = 'shot';
+  const ifr = document.createElement('iframe');
+  ifr.src = file; ifr.loading = 'lazy'; ifr.tabIndex = -1;
+  shot.appendChild(ifr);
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.innerHTML = `<b>${name}</b><span>${desc}</span><i>${tag}</i>`;
+  a.appendChild(shot); a.appendChild(meta);
+  grid.appendChild(a);
+}
+// 按卡片实际宽度缩放 iframe（960×600 → 卡宽）
+function fit() {
+  document.querySelectorAll('.shot').forEach(s => {
+    const w = s.clientWidth;
+    s.querySelector('iframe').style.transform = `scale(${w / 960})`;
+  });
+}
+fit();
+window.addEventListener('resize', fit);
+</script>
+</body>
+</html>

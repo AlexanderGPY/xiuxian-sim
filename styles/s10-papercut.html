@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张10 · 剪纸窗花</title>
+<style>
+  body{margin:0;background:#5a1010;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 10px 50px rgba(0,0,0,.45)}
+  .tag{position:fixed;top:10px;left:16px;color:#ffd9c8;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#c88878;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">10 · 剪纸窗花</div>
+<div class="cap">红纸镂空 + 分层投影 —— 民俗喜庆，节气/年节活动绝配</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const RED = '#c8102e', RED2 = '#a80c24', WHITE = '#fdf3e3';
+
+// 底红纸
+g.fillStyle = RED; g.fillRect(0, 0, 960, 600);
+
+// 白色云纹边框（四角对称）
+function cloudRow(x, y, n, dir) {
+  g.fillStyle = WHITE;
+  for (let i = 0; i < n; i++) {
+    const cx = x + i * 34 * dir;
+    g.beginPath(); g.arc(cx, y, 10, 0, 7); g.fill();
+    g.beginPath(); g.arc(cx + 16 * dir, y, 7, 0, 7); g.fill();
+    g.fillRect(Math.min(cx, cx + 16 * dir), y, Math.abs(16 * dir), 4);
+  }
+}
+cloudRow(30, 30, 12, 1); cloudRow(30, 570, 12, 1);
+
+// 分层白纸山（每层带投影=纸的厚度）
+function paperMt(x, y, w, h, lift) {
+  g.fillStyle = 'rgba(90,10,16,.55)';
+  g.beginPath();
+  g.moveTo(x + 6 + lift, y + 8 + lift);
+  g.quadraticCurveTo(x + w * 0.25 + lift, y - h + lift, x + w * 0.5 + lift, y - h * 0.9 + lift);
+  g.quadraticCurveTo(x + w * 0.75 + lift, y - h + lift, x + w + lift, y + 8 + lift);
+  g.closePath(); g.fill();
+  g.fillStyle = WHITE;
+  g.beginPath();
+  g.moveTo(x, y + 8);
+  g.quadraticCurveTo(x + w * 0.25, y - h, x + w * 0.5, y - h * 0.9);
+  g.quadraticCurveTo(x + w * 0.75, y - h, x + w, y + 8);
+  g.closePath(); g.fill();
+  // 山上镂空锯齿纹
+  g.fillStyle = RED;
+  g.beginPath();
+  g.moveTo(x + w * 0.18, y + 2);
+  g.lineTo(x + w * 0.3, y - h * 0.55); g.lineTo(x + w * 0.36, y - h * 0.3);
+  g.lineTo(x + w * 0.46, y - h * 0.75); g.lineTo(x + w * 0.54, y - h * 0.35);
+  g.lineTo(x + w * 0.64, y - h * 0.6); g.lineTo(x + w * 0.78, y + 2);
+  g.closePath(); g.fill();
+}
+paperMt(60, 480, 380, 280, 10);
+paperMt(320, 500, 400, 230, 14);
+paperMt(600, 480, 330, 260, 8);
+
+// 剪纸团花太阳
+function rosette(x, y, r) {
+  g.fillStyle = WHITE;
+  g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  g.fillStyle = RED;
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4;
+    g.beginPath();
+    g.moveTo(x + Math.cos(a) * r * 0.3, y + Math.sin(a) * r * 0.3);
+    g.lineTo(x + Math.cos(a + 0.22) * r * 0.85, y + Math.sin(a + 0.22) * r * 0.85);
+    g.lineTo(x + Math.cos(a - 0.22) * r * 0.85, y + Math.sin(a - 0.22) * r * 0.85);
+    g.closePath(); g.fill();
+  }
+  g.fillStyle = WHITE; g.beginPath(); g.arc(x, y, r * 0.22, 0, 7); g.fill();
+}
+rosette(810, 130, 52);
+
+// 剪纸修士（白纸人 + 红色内部剪痕）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.fillStyle = 'rgba(90,10,16,.5)';
+  g.beginPath(); g.ellipse(5, 6, 40, 10, 0, 0, 7); g.fill();       // 投影
+  g.fillStyle = WHITE;
+  // 头
+  g.beginPath(); g.arc(0, -72, 15, 0, 7); g.fill();
+  g.beginPath(); g.arc(9, -88, 7, 0, 7); g.fill();                  // 髻
+  // 身
+  g.beginPath();
+  g.moveTo(-12, -58); g.quadraticCurveTo(-32, -6, -24, 2);
+  g.quadraticCurveTo(0, 12, 24, 2); g.quadraticCurveTo(32, -6, 12, -58);
+  g.closePath(); g.fill();
+  // 内部剪痕：红月牙领 + 花纹
+  g.fillStyle = RED;
+  g.beginPath(); g.moveTo(-8, -54); g.quadraticCurveTo(0, -40, 10, -52); g.lineTo(8, -44); g.quadraticCurveTo(0, -34, -6, -46); g.closePath(); g.fill();
+  g.beginPath(); g.arc(0, -18, 9, 0, 7); g.fill();
+  g.beginPath(); g.arc(0, -18, 4, 0, 7); g.fillStyle = WHITE; g.fill();
+  // 拱手（白衣拱）
+  g.fillStyle = WHITE;
+  g.beginPath(); g.ellipse(0, -30, 12, 7, 0, 0, 7); g.fill();
+  g.strokeStyle = RED; g.lineWidth = 1.6;
+  g.beginPath(); g.arc(0, -30, 8, 0.3, Math.PI - 0.3); g.stroke();
+  g.restore();
+}
+person(480, 500, 1.7);
+
+// 剪纸道具（白形 + 红镂）
+function cutPill(x, y) {
+  g.fillStyle = WHITE; g.beginPath(); g.arc(x, y, 17, 0, 7); g.fill();
+  g.fillStyle = RED; g.beginPath(); g.arc(x - 4, y - 4, 7, 0, 7); g.fill();
+  g.fillStyle = WHITE; g.beginPath(); g.arc(x - 4, y - 4, 3, 0, 7); g.fill();
+}
+function cutSword(x, y) {
+  g.save(); g.translate(x, y); g.rotate(-0.3); g.fillStyle = WHITE;
+  g.beginPath(); g.roundRect(-52, -7, 96, 14, 6); g.fill();
+  g.fillStyle = RED; g.beginPath(); g.roundRect(-46, -3, 80, 4, 2); g.fill();
+  g.fillStyle = WHITE; g.fillRect(44, -13, 8, 26);
+  g.fillStyle = RED; g.beginPath(); g.arc(48, 0, 3, 0, 7); g.fill();
+  g.restore();
+}
+function cutGourd(x, y) {
+  g.fillStyle = WHITE;
+  g.beginPath(); g.arc(x, y + 10, 16, 0, 7); g.fill();
+  g.beginPath(); g.arc(x, y - 10, 10, 0, 7); g.fill();
+  g.fillRect(x - 3, y - 26, 6, 8);
+  g.fillStyle = RED;
+  g.beginPath(); g.arc(x, y + 10, 8, 0, 7); g.fill();
+  g.fillStyle = WHITE; g.beginPath(); g.arc(x, y + 10, 3.4, 0, 7); g.fill();
+}
+cutPill(180, 540); cutSword(280, 546); cutGourd(760, 540);
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张15 · 极简一笔线</title>
+<style>
+  body{margin:0;background:#f7f6f1;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+  .tag{position:fixed;top:10px;left:16px;color:#3a3a36;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#a8a8a0;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">15 · 极简一笔线</div>
+<div class="cap">一根连续线条 + 一个朱点 —— 逼格最高，最考验留白功力</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+g.fillStyle = '#f7f6f1'; g.fillRect(0, 0, 960, 600);
+g.strokeStyle = '#26241f'; g.lineWidth = 2.6; g.lineCap = 'round'; g.lineJoin = 'round';
+
+// 一笔画：山→人→松（视觉上连续不断）
+g.beginPath();
+g.moveTo(80, 480);
+// 山脊起笔
+g.bezierCurveTo(140, 300, 220, 240, 300, 250);
+g.bezierCurveTo(340, 255, 360, 300, 400, 330);
+g.quadraticCurveTo(430, 350, 470, 340);
+// 下坡收进人物头
+g.bezierCurveTo(510, 330, 520, 300, 512, 272);
+// 头部圆弧
+g.arc(502, 262, 11, 0.6, 5.2);
+// 髻一笔
+g.arc(509, 244, 5, 2.6, 6.8);
+// 身体与袍摆
+g.bezierCurveTo(512, 274, 500, 280, 488, 300);
+g.bezierCurveTo(474, 330, 470, 360, 476, 400);
+g.quadraticCurveTo(500, 412, 524, 400);
+g.bezierCurveTo(530, 360, 526, 320, 514, 290);
+// 拱手弧
+g.quadraticCurveTo(500, 306, 489, 302);
+// 袍摆延出地面线
+g.bezierCurveTo(540, 410, 620, 416, 700, 408);
+// 地面线起伏到松
+g.quadraticCurveTo(760, 402, 800, 410);
+// 松树一笔（干+冠）
+g.bezierCurveTo(810, 400, 818, 360, 826, 330);
+g.bezierCurveTo(850, 322, 872, 336, 866, 352);
+g.bezierCurveTo(880, 356, 884, 376, 870, 384);
+g.bezierCurveTo(876, 398, 860, 408, 848, 400);
+g.bezierCurveTo(838, 408, 818, 404, 812, 394);
+// 地面线收尾
+g.bezierCurveTo(850, 400, 890, 396, 920, 400);
+g.stroke();
+
+// 月亮：不闭合的弧（同一根线哲学）
+g.beginPath(); g.arc(760, 150, 46, 0.8, 4.6); g.stroke();
+
+// 唯一的一点朱砂：人物心口
+g.fillStyle = '#c03426';
+g.beginPath(); g.arc(501, 320, 5, 0, 7); g.fill();
+
+// 道具：三笔小线条icon
+g.lineWidth = 2.2;
+g.beginPath(); g.arc(170, 520, 13, 1.2, 5.4); g.stroke();          // 丹
+g.beginPath(); g.moveTo(230, 535); g.lineTo(300, 515); g.stroke();  // 剑
+g.beginPath(); g.moveTo(252, 528); g.lineTo(258, 540); g.stroke();
+g.beginPath();                                                    // 葫芦 8 字
+g.arc(360, 530, 13, 0.9, 5.8); g.stroke();
+g.beginPath(); g.arc(360, 512, 8, 2.2, 7.2); g.stroke();
+
+// 大量留白 + 竖排小字
+g.fillStyle = '#7a786e'; g.font = '15px "Kaiti SC",serif';
+'云隐仙踪'.split('').forEach((ch, i) => g.fillText(ch, 60, 200 + i * 26));
+g.fillStyle = '#a8a6a0'; g.font = '12px "Kaiti SC",serif';
+'一线之内 山水人仙'.split('').forEach((ch, i) => g.fillText(ch, 60, 330 + i * 20));
+</script>
+</body>
+</html>

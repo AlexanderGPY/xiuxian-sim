@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张20 · 夜宴青绿</title>
+<style>
+  body{margin:0;background:#060a10;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 0 80px rgba(60,200,170,.18)}
+  .tag{position:fixed;top:10px;left:16px;color:#9fe8d0;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#5a7a72;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">20 · 夜宴青绿</div>
+<div class="cap">夜空青绿矿色 + 金边 + 流萤 —— 高级感天花板，水墨的"夜店版"</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+
+// 夜空
+const sky = g.createLinearGradient(0, 0, 0, 600);
+sky.addColorStop(0, '#060a12'); sky.addColorStop(0.55, '#0a1620'); sky.addColorStop(1, '#0d1f22');
+g.fillStyle = sky; g.fillRect(0, 0, 960, 600);
+
+// 星
+for (let i = 0; i < 50; i++) {
+  const x = (i * 197) % 960, y = (i * 83) % 340;
+  g.globalAlpha = 0.2 + (i % 4) * 0.18;
+  g.fillStyle = '#dfeef0';
+  g.fillRect(x, y, 1.6, 1.6);
+}
+g.globalAlpha = 1;
+
+// 皓月 + 光晕
+const mg = g.createRadialGradient(720, 120, 8, 720, 120, 130);
+mg.addColorStop(0, 'rgba(230,240,235,.9)'); mg.addColorStop(0.2, 'rgba(190,215,210,.35)'); mg.addColorStop(1, 'rgba(120,180,170,0)');
+g.fillStyle = mg; g.beginPath(); g.arc(720, 120, 130, 0, 7); g.fill();
+g.fillStyle = '#e8f2ee'; g.beginPath(); g.arc(720, 120, 34, 0, 7); g.fill();
+g.fillStyle = 'rgba(160,190,185,.5)'; g.beginPath(); g.arc(708, 112, 6, 0, 7); g.fill();
+g.beginPath(); g.arc(730, 130, 4, 0, 7); g.fill();
+
+// 青绿发光山（多层）
+function nmt(x, y, w, h, c1, c2, edge) {
+  const grad = g.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.moveTo(x, y + h);
+  g.bezierCurveTo(x + w * 0.12, y + h * 0.4, x + w * 0.3, y + h * 0.16, x + w * 0.44, y + 4);
+  g.bezierCurveTo(x + w * 0.52, y - h * 0.03, x + w * 0.6, y + h * 0.06, x + w * 0.7, y + h * 0.24);
+  g.bezierCurveTo(x + w * 0.82, y + h * 0.44, x + w * 0.9, y + h * 0.6, x + w, y + h);
+  g.closePath(); g.fill();
+  // 金边脊线
+  g.strokeStyle = edge; g.lineWidth = 1.8;
+  g.beginPath();
+  g.moveTo(x + 2, y + h - 2);
+  g.bezierCurveTo(x + w * 0.12, y + h * 0.4, x + w * 0.3, y + h * 0.16, x + w * 0.44, y + 6);
+  g.stroke();
+  // 内部发光竖纹
+  g.globalAlpha = 0.22; g.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    g.beginPath();
+    g.moveTo(x + w * (0.16 * i + 0.2), y + h * 0.9);
+    g.quadraticCurveTo(x + w * (0.16 * i + 0.26), y + h * 0.5, x + w * (0.16 * i + 0.3), y + h * 0.3);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+nmt(20, 160, 400, 330, '#155e52', '#0c2f2c', '#c8a86a');
+nmt(500, 150, 440, 350, '#1a6a58', '#0d332e', '#d8b878');
+nmt(210, 250, 560, 260, '#1f7a62', '#0e3831', '#b09558');
+
+// 水面（夜镜）+ 月光带
+g.fillStyle = '#0a1e22'; g.fillRect(0, 470, 960, 130);
+const moonPath = g.createLinearGradient(680, 470, 780, 600);
+moonPath.addColorStop(0, 'rgba(220,235,228,.22)'); moonPath.addColorStop(1, 'rgba(220,235,228,.04)');
+g.fillStyle = moonPath;
+g.beginPath(); g.moveTo(660, 470); g.lineTo(790, 470); g.lineTo(830, 600); g.lineTo(620, 600); g.closePath(); g.fill();
+g.strokeStyle = 'rgba(200,230,220,.25)'; g.lineWidth = 1.2;
+for (let y = 478; y < 596; y += 9) {
+  const cx = 725 + (y % 27) * 1.6 - 20;
+  g.beginPath(); g.moveTo(cx - 20 - y * 0.05, y); g.lineTo(cx + 24 + y * 0.04, y); g.stroke();
+}
+
+// 山间雾带
+g.fillStyle = 'rgba(190,220,215,.08)';
+[[0, 320, 500, 26], [400, 380, 520, 30]].forEach(([x, y, w, h]) => {
+  g.beginPath(); g.ellipse(x + w / 2, y, w / 2, h / 2, 0, 0, 7); g.fill();
+});
+
+// 人物：崖上抚琴背影（黑色剪影 + 青绿描边 + 飘带）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  // 崖石
+  g.fillStyle = '#081412';
+  g.beginPath();
+  g.moveTo(-52, 30); g.lineTo(-20, -12); g.lineTo(48, -16); g.lineTo(64, 30);
+  g.closePath(); g.fill();
+  g.strokeStyle = '#3ec6a8'; g.lineWidth = 1.4; g.globalAlpha = .7;
+  g.beginPath(); g.moveTo(-20, -11); g.lineTo(48, -15); g.stroke(); g.globalAlpha = 1;
+  // 剪影坐姿
+  g.fillStyle = '#04100c';
+  g.beginPath();
+  g.moveTo(-22, 0);                                  // 盘腿左端
+  g.quadraticCurveTo(-30, -26, -12, -38);            // 后背
+  g.quadraticCurveTo(0, -46, 12, -38);               // 肩到头下
+  g.arc(14, -50, 9, 1.2, 4.4);                       // 头
+  g.quadraticCurveTo(26, -30, 30, -12);              // 前臂手
+  g.quadraticCurveTo(24, 4, 10, 6);
+  g.quadraticCurveTo(-10, 8, -22, 0);
+  g.closePath(); g.fill();
+  // 髻
+  g.beginPath(); g.arc(18, -62, 4.5, 0, 7); g.fill();
+  // 青绿轮廓光
+  g.strokeStyle = '#3ec6a8'; g.lineWidth = 1.8;
+  g.shadowColor = '#3ec6a8'; g.shadowBlur = 10;
+  g.beginPath();
+  g.moveTo(-22, 0); g.quadraticCurveTo(-30, -26, -12, -38);
+  g.quadraticCurveTo(0, -46, 12, -38);
+  g.stroke();
+  g.beginPath(); g.arc(14, -50, 9.4, 1.1, 4.6); g.stroke();
+  g.shadowBlur = 0;
+  // 古琴（膝前一横）
+  g.fillStyle = '#0a241e'; g.strokeStyle = '#c8a86a'; g.lineWidth = 1.4;
+  g.beginPath(); g.roundRect(-14, -6, 44, 8, 3); g.fill(); g.stroke();
+  // 飘带（金）
+  g.strokeStyle = '#d8b878'; g.lineWidth = 2; g.globalAlpha = .9;
+  g.beginPath(); g.moveTo(-10, -34); g.quadraticCurveTo(-44, -22, -40, 2); g.quadraticCurveTo(-38, 14, -48, 24); g.stroke();
+  g.beginPath(); g.moveTo(-8, -28); g.quadraticCurveTo(-30, -12, -28, 8); g.stroke();
+  g.globalAlpha = 1;
+  g.restore();
+}
+person(600, 462, 1.6);
+
+// 流萤
+function firefly(x, y, r) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r * 5);
+  gr.addColorStop(0, 'rgba(220,255,230,.95)'); gr.addColorStop(0.25, 'rgba(160,240,190,.5)'); gr.addColorStop(1, 'rgba(120,220,160,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 5, 0, 7); g.fill();
+  g.fillStyle = '#eafff0'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+}
+[[120,240,2.4],[200,420,1.8],[90,500,1.6],[340,300,2],[880,340,2.2],[830,540,1.7],[460,180,1.8],[520,420,2.2],[680,260,1.5],[300,540,1.4]].forEach(([x,y,r]) => firefly(x, y, r));
+
+// 道具：发光古物（前景供台）
+function relic(x, y, c, draw) {
+  const gr = g.createRadialGradient(x, y, 4, x, y, 44);
+  gr.addColorStop(0, c.replace('RGB', '0.5')); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  draw(x, y);
+}
+relic(150, 520, 'rgba(224,110,90,RGB)', (x, y) => {
+  g.fillStyle = 'rgba(224,110,90,.18)'; g.beginPath(); g.arc(x, y, 40, 0, 7); g.fill();
+  g.fillStyle = '#e06e5a'; g.shadowColor = '#e06e5a'; g.shadowBlur = 16;
+  g.beginPath(); g.arc(x, y, 13, 0, 7); g.fill();
+  g.fillStyle = '#ffe8dd'; g.beginPath(); g.arc(x - 4, y - 4, 4, 0, 7); g.fill();
+  g.shadowBlur = 0;
+});
+relic(250, 530, 'rgba(200,215,230,RGB)', (x, y) => {
+  g.fillStyle = 'rgba(200,215,230,.15)'; g.beginPath(); g.arc(x, y, 42, 0, 7); g.fill();
+  g.strokeStyle = '#c8d8e6'; g.shadowColor = '#c8d8e6'; g.shadowBlur = 14; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(x - 34, y + 8); g.lineTo(x + 34, y - 8); g.stroke();
+  g.lineWidth = 2; g.beginPath(); g.moveTo(x - 10, y + 14); g.lineTo(x + 8, y - 14); g.stroke();
+  g.shadowBlur = 0;
+});
+relic(860, 510, 'rgba(216,184,120,RGB)', (x, y) => {
+  g.fillStyle = 'rgba(216,184,120,.16)'; g.beginPath(); g.arc(x, y, 40, 0, 7); g.fill();
+  g.strokeStyle = '#d8b878'; g.shadowColor = '#d8b878'; g.shadowBlur = 14; g.lineWidth = 2.6;
+  g.beginPath(); g.arc(x, y + 8, 13, 0, 7); g.stroke();
+  g.beginPath(); g.arc(x, y - 9, 8, 0, 7); g.stroke();
+  g.shadowBlur = 0;
+});
+</script>
+</body>
+</html>

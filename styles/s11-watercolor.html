@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张11 · 水彩晕染</title>
+<style>
+  body{margin:0;background:#fbfaf4;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+  .tag{position:fixed;top:10px;left:16px;color:#5a6a68;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#a3ada8;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">11 · 水彩晕染</div>
+<div class="cap">湿边扩散 + 淡彩叠加 —— 柔和治愈，与水墨最接近的"温柔版"</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+g.fillStyle = '#fdfcf7'; g.fillRect(0, 0, 960, 600);
+
+// 水彩笔触：多层低透明 + 湿边(深色描晕) + 颜料沉积边
+function wash(path, color, layers) {
+  for (let i = 0; i < (layers || 3); i++) {
+    g.globalAlpha = 0.16;
+    g.fillStyle = color;
+    g.save();
+    g.shadowColor = color; g.shadowBlur = 14;
+    path();
+    g.fill();
+    g.restore();
+  }
+  // 沉积边(干了的颜料边缘线)
+  g.globalAlpha = 0.32;
+  g.strokeStyle = color; g.lineWidth = 1.4;
+  path(); g.stroke();
+  g.globalAlpha = 1;
+}
+function mtPath(x, y, w, h) {
+  return () => {
+    g.beginPath();
+    g.moveTo(x, y + h);
+    g.bezierCurveTo(x + w * 0.1, y + h * 0.4, x + w * 0.32, y + h * 0.1, x + w * 0.48, y + 4);
+    g.bezierCurveTo(x + w * 0.62, y + h * 0.06, x + w * 0.82, y + h * 0.5, x + w, y + h);
+    g.closePath();
+  };
+}
+// 远中近三层山（蓝灰/青/黛）
+wash(mtPath(50, 130, 420, 300), '#9fb8c4', 4);
+wash(mtPath(330, 190, 400, 260), '#7fb0a8', 3);
+wash(mtPath(560, 170, 380, 290), '#5a8890', 3);
+
+// 天空水彩晕（暖橙 + 藕荷）
+function blob(x, y, r, c, a) {
+  g.globalAlpha = a;
+  const gr = g.createRadialGradient(x, y, r * 0.2, x, y, r);
+  gr.addColorStop(0, c); gr.addColorStop(0.7, c); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr;
+  g.beginPath(); g.ellipse(x, y, r * 1.3, r * 0.8, 0, 0, 7); g.fill();
+  g.globalAlpha = 1;
+}
+blob(700, 90, 90, '#f5c9a0', 0.5);
+blob(820, 140, 70, '#d8a8b8', 0.4);
+blob(180, 120, 60, '#c9d8e8', 0.5);
+
+// 水面：横抹淡蓝
+for (let i = 0; i < 4; i++) {
+  blob(200 + i * 180, 480 + (i % 2) * 24, 100, '#b8d0dc', 0.35);
+}
+
+// 溅点
+g.fillStyle = '#5a8890';
+const SPL = [[90,200],[160,260],[420,180],[700,340],[880,280],[520,120],[300,90]];
+for (const [x, y] of SPL) {
+  g.globalAlpha = 0.3 + Math.random() * 0.1;
+  g.beginPath(); g.arc(x, y, 1.5 + (x % 3), 0, 7); g.fill();
+}
+g.globalAlpha = 1;
+
+// 人物：水彩淡影修士
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  const robe = '#6a7fa8', deep = '#4a5f88';
+  // 底湿影
+  g.globalAlpha = 0.1; g.fillStyle = robe;
+  g.beginPath(); g.ellipse(0, 6, 34, 10, 0, 0, 7); g.fill();
+  g.globalAlpha = 1;
+  // 身袍：两块晕染
+  wash(() => {
+    g.beginPath();
+    g.moveTo(-13, -46); g.quadraticCurveTo(-30, -8, -22, 2);
+    g.quadraticCurveTo(0, 12, 22, 2); g.quadraticCurveTo(30, -8, 13, -46);
+    g.closePath();
+  }, robe, 2);
+  // 袖影
+  wash(() => { g.beginPath(); g.ellipse(0, -26, 12, 7, 0, 0, 7); }, deep, 1);
+  // 头
+  g.fillStyle = '#e8d4bc'; g.globalAlpha = .9;
+  g.beginPath(); g.arc(0, -58, 10, 0, 7); g.fill();
+  g.globalAlpha = .75; g.fillStyle = '#4a4438';
+  g.beginPath(); g.arc(0, -62, 10.4, Math.PI, 0); g.fill();
+  g.beginPath(); g.arc(7, -72, 5, 0, 7); g.fill();
+  g.globalAlpha = 1;
+  g.restore();
+}
+person(430, 500, 1.7);
+
+// 道具：湿画小物
+wash(() => { g.beginPath(); g.arc(180, 530, 16, 0, 7); }, '#d8917c', 2);
+g.fillStyle = '#fff'; g.globalAlpha = .6; g.beginPath(); g.arc(174, 524, 4, 0, 7); g.fill(); g.globalAlpha = 1;
+wash(() => {
+  g.save(); g.translate(290, 540); g.rotate(-0.28);
+  g.beginPath(); g.roundRect(-46, -6, 88, 12, 6); g.restore();
+}, '#8aa8b8', 2);
+wash(() => { g.beginPath(); g.arc(740, 524, 15, 0, 7); }, '#9ab88a', 2);
+wash(() => { g.beginPath(); g.arc(740, 502, 9, 0, 7); }, '#9ab88a', 2);
+</script>
+</body>
+</html>

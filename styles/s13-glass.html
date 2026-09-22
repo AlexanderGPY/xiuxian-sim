@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张13 · 玻璃拟态</title>
+<style>
+  body{margin:0;background:#151824;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"PingFang SC","Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#dfe6ff;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#7d86a8;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">13 · 玻璃拟态</div>
+<div class="cap">磨砂玻璃卡 + 彩斑背景 —— UI 现代感最强，信息面板好做</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+
+// 深底 + 大彩斑
+g.fillStyle = '#181c2c'; g.fillRect(0, 0, 960, 600);
+function orb(x, y, r, c) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, c); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+}
+orb(180, 130, 300, 'rgba(90,120,255,.55)');
+orb(780, 180, 320, 'rgba(220,90,200,.45)');
+orb(520, 480, 340, 'rgba(60,200,190,.4)');
+orb(880, 480, 220, 'rgba(255,160,90,.35)');
+
+// 磨砂玻璃面板工厂
+function glass(x, y, w, h, r) {
+  g.save();
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 24; g.shadowOffsetY = 10;
+  g.fillStyle = 'rgba(255,255,255,.10)';
+  g.beginPath(); g.roundRect(x, y, w, h, r); g.fill();
+  g.restore();
+  // 磨砂感：内部叠淡彩
+  g.save();
+  g.clip();  // 以已描路径裁剪(roundRect 再次描)
+  g.beginPath(); g.roundRect(x, y, w, h, r); g.clip();
+  orb(x + w * 0.3, y + h * 0.2, w * 0.5, 'rgba(160,180,255,.14)');
+  orb(x + w * 0.8, y + h * 0.9, w * 0.5, 'rgba(255,150,220,.12)');
+  g.restore();
+  // 边缘高光
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1.4;
+  g.beginPath(); g.roundRect(x, y, w, h, r); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2;
+  g.beginPath(); g.roundRect(x + 1.5, y + 1.5, w - 3, h * 0.42, r); g.stroke();
+  // 顶部反光条
+  g.fillStyle = 'rgba(255,255,255,.16)';
+  g.beginPath(); g.roundRect(x + w * 0.12, y + h * 0.06, w * 0.5, h * 0.08, 4); g.fill();
+}
+
+// 主场景玻璃窗
+glass(250, 90, 460, 420, 26);
+
+// 窗内：线描仙山(白细线，像玻璃蚀刻)
+g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2;
+g.beginPath();
+g.moveTo(300, 440);
+g.bezierCurveTo(330, 330, 390, 300, 430, 220);
+g.bezierCurveTo(455, 175, 500, 170, 520, 230);
+g.bezierCurveTo(545, 300, 600, 340, 630, 440);
+g.stroke();
+g.strokeStyle = 'rgba(255,255,255,.4)'; g.lineWidth = 1.2;
+g.beginPath(); g.moveTo(370, 440); g.quadraticCurveTo(410, 350, 450, 300); g.stroke();
+g.beginPath(); g.moveTo(500, 440); g.quadraticCurveTo(520, 360, 560, 320); g.stroke();
+// 蚀刻月
+g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2;
+g.beginPath(); g.arc(600, 170, 34, 0, 7); g.stroke();
+g.strokeStyle = 'rgba(255,255,255,.3)';
+g.beginPath(); g.arc(600, 170, 46, 0, 7); g.stroke();
+// 蚀刻松
+g.strokeStyle = 'rgba(255,255,255,.75)';
+g.beginPath(); g.moveTo(320, 440); g.lineTo(320, 390); g.stroke();
+[[300, 395], [335, 400], [312, 375], [330, 380]].forEach(([x, y]) => {
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x + (x < 318 ? -22 : 22), y - 6); g.stroke();
+});
+
+// 窗内人物：白色剪影修士(玻璃人)
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.fillStyle = 'rgba(255,255,255,.16)';
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.2;
+  g.beginPath();
+  g.moveTo(-13, -46); g.quadraticCurveTo(-28, -8, -21, 2);
+  g.quadraticCurveTo(0, 11, 21, 2); g.quadraticCurveTo(28, -8, 13, -46);
+  g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.arc(0, -58, 9.5, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(6, -67); g.quadraticCurveTo(10, -76, 7, -80); g.stroke();
+  g.beginPath(); g.ellipse(0, -26, 11, 6.4, 0, 0, 7); g.stroke();
+  g.restore();
+}
+person(480, 478, 1.7);
+
+// 悬浮玻璃道具卡
+glass(120, 470, 130, 92, 18);
+g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2;
+g.beginPath(); g.arc(158, 516, 16, 0, 7); g.stroke();
+g.fillStyle = 'rgba(255,140,120,.8)'; g.beginPath(); g.arc(154, 511, 5, 0, 7); g.fill();
+g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '13px "PingFang SC",serif';
+g.fillText('凝气丹', 186, 512); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillText('品阶·三', 186, 532);
+
+glass(716, 452, 150, 100, 18);
+g.save(); g.translate(756, 502); g.rotate(-0.35);
+g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.6;
+g.beginPath(); g.moveTo(-24, 0); g.lineTo(30, 0); g.stroke();
+g.beginPath(); g.moveTo(30, -9); g.lineTo(30, 9); g.stroke();
+g.restore();
+g.fillStyle = 'rgba(255,255,255,.85)';
+g.fillText('青霜剑', 800, 496); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillText('品阶·二', 800, 516);
+
+glass(560, 40, 200, 84, 18);
+g.fillStyle = 'rgba(255,255,255,.92)'; g.font = 'bold 21px "PingFang SC",serif';
+g.fillText('云隐仙踪', 596, 78);
+g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '12px "PingFang SC",serif';
+g.fillText('MIST · SECT · SIM', 596, 100);
+</script>
+</body>
+</html>

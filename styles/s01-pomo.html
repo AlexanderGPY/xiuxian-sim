@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张01 · 泼墨大写意</title>
+<style>
+  body{margin:0;background:#efe9db;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+  .tag{position:fixed;top:10px;left:16px;color:#2a2a2a;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#8a8474;font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">01 · 泼墨大写意</div>
+<div class="cap">大块浓淡泼墨 + 飞白 + 朱砂印 —— 气势最足，水墨的激进版</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const W = 960, H = 600;
+const JIAO = '#17150f', NONG = '#2e2b23', ZHONG = '#55503f', DAN = '#8b856f', ZHU = '#b03a29';
+
+// 泼墨山：多边形斑块 + 边缘溅点
+function splash(cx, cy, w, h, color, alpha, dots) {
+  const pts = 14;
+  g.beginPath();
+  for (let i = 0; i <= pts; i++) {
+    const a = i / pts * Math.PI;
+    const rx = w / 2 * (0.75 + 0.25 * Math.sin(i * 5.3));
+    const ry = h * (0.8 + 0.2 * Math.cos(i * 3.1));
+    const x = cx + Math.cos(Math.PI - a) * rx;
+    const y = cy - Math.sin(a) * ry;
+    i ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.closePath();
+  g.fillStyle = color; g.globalAlpha = alpha; g.fill();
+  // 底部垂滴
+  g.fillRect(cx - w * 0.1, cy, w * 0.2, h * 0.25);
+  g.globalAlpha = 1;
+  // 溅点
+  g.fillStyle = color;
+  for (let i = 0; i < dots; i++) {
+    const a = i * 2.399, r = 30 + (i * 37 % 90);
+    g.globalAlpha = alpha * (0.3 + (i % 3) * 0.2);
+    g.beginPath();
+    g.arc(cx + Math.cos(a) * r * 1.4, cy - h * 0.2 + Math.sin(a) * r, 1.5 + (i % 4), 0, 7);
+    g.fill();
+  }
+  g.globalAlpha = 1;
+}
+
+g.fillStyle = '#f7f3e7'; g.fillRect(0, 0, W, H);
+// 远山(淡) → 中山 → 近山(浓)
+splash(300, 470, 480, 300, DAN, 0.5, 8);
+splash(560, 500, 400, 340, ZHONG, 0.75, 10);
+splash(760, 530, 330, 300, JIAO, 0.92, 12);
+// 一道飞白瀑布
+g.strokeStyle = '#f7f3e7'; g.lineWidth = 10;
+g.beginPath(); g.moveTo(680, 220); g.lineTo(690, 500); g.stroke();
+g.strokeStyle = ZHONG; g.lineWidth = 2;
+for (let y = 230; y < 500; y += 14) { g.globalAlpha = .5; g.beginPath(); g.moveTo(686, y); g.lineTo(694, y + 7); g.stroke(); }
+g.globalAlpha = 1;
+// 横抹远滩
+g.fillStyle = NONG; g.globalAlpha = .35;
+g.beginPath(); g.ellipse(380, 520, 300, 14, 0, 0, 7); g.fill(); g.globalAlpha = 1;
+
+// 人物：极简墨人(浓墨)
+function person(x, y, s) {
+  g.fillStyle = NONG;
+  g.beginPath(); g.arc(x, y - 46 * s, 9 * s, 0, 7); g.fill();               // 头
+  g.beginPath(); g.arc(x + 5 * s, y - 55 * s, 4.4 * s, 0, 7); g.fill();     // 发髻
+  g.beginPath();                                                             // 身袍(梯形+弧摆)
+  g.moveTo(x - 13 * s, y - 36 * s);
+  g.quadraticCurveTo(x - 20 * s, y - 4 * s, x - 17 * s, y);
+  g.quadraticCurveTo(x, y + 7 * s, x + 17 * s, y);
+  g.quadraticCurveTo(x + 20 * s, y - 4 * s, x + 13 * s, y - 36 * s);
+  g.closePath(); g.fill();
+  g.fillStyle = JIAO;                                                        // 袖手
+  g.beginPath(); g.ellipse(x, y - 16 * s, 11 * s, 5 * s, 0, 0, 7); g.fill();
+  // 背剑
+  g.strokeStyle = JIAO; g.lineWidth = 4.5 * s;
+  g.beginPath(); g.moveTo(x + 14 * s, y - 50 * s); g.lineTo(x + 22 * s, y - 2 * s); g.stroke();
+  g.lineWidth = 1.4 * s;
+  g.beginPath(); g.moveTo(x + 9 * s, y - 36 * s); g.lineTo(x + 19 * s, y - 32 * s); g.stroke();
+}
+person(250, 470, 1.5);
+
+// 道具：丹/剑/葫芦
+function pill(x, y) { g.strokeStyle = JIAO; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 13, 0, 7); g.stroke(); g.fillStyle = ZHU; g.beginPath(); g.arc(x - 3, y - 3, 4, 0, 7); g.fill(); }
+function sword(x, y) { g.strokeStyle = JIAO; g.lineWidth = 6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 92, y - 26); g.stroke(); g.lineWidth = 4; g.beginPath(); g.moveTo(x + 16, y + 6); g.lineTo(x + 26, y - 12); g.stroke(); }
+function gourd(x, y) { g.strokeStyle = JIAO; g.lineWidth = 3.4; g.beginPath(); g.arc(x, y + 14, 15, 0, 7); g.stroke(); g.beginPath(); g.arc(x, y - 8, 9, 0, 7); g.stroke(); g.beginPath(); g.moveTo(x, y - 17); g.lineTo(x, y - 24); g.stroke(); }
+pill(760, 545); sword(806, 560); gourd(905, 548);
+
+// 朱砂印
+g.fillStyle = ZHU; g.globalAlpha = .92;
+g.fillRect(52, 486, 44, 44);
+g.fillStyle = '#f7f3e7'; g.font = 'bold 19px "Kaiti SC",serif'; g.textAlign = 'center';
+g.fillText('云', 74, 504); g.fillText('隐', 74, 524);
+g.globalAlpha = 1;
+</script>
+</body>
+</html>

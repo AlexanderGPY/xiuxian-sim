@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张08 · 赛博修仙</title>
+<style>
+  body{margin:0;background:#05050e;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 0 60px rgba(80,220,255,.15)}
+  .tag{position:fixed;top:10px;left:16px;color:#7de8ff;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#5a7a95;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">08 · 赛博修仙</div>
+<div class="cap">霓虹线框 + 发光阵法 —— 反差感拉满，阵法/天劫表现力强</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const CY = '#4de8ff', MG = '#ff5ad0';
+
+// 深空底
+const bg = g.createLinearGradient(0, 0, 0, 600);
+bg.addColorStop(0, '#05050e'); bg.addColorStop(1, '#0b0c1e');
+g.fillStyle = bg; g.fillRect(0, 0, 960, 600);
+
+// 电子雾山（线框剪影，发光）
+g.shadowColor = CY; g.shadowBlur = 10;
+g.strokeStyle = CY; g.lineWidth = 1.6;
+function neonMt(x, y, w, h, glow) {
+  g.globalAlpha = glow;
+  g.fillStyle = 'rgba(20,40,80,.25)';
+  g.beginPath();
+  g.moveTo(x, y + h);
+  g.lineTo(x + w * 0.28, y + h * 0.35); g.lineTo(x + w * 0.4, y + h * 0.6);
+  g.lineTo(x + w * 0.52, y); g.lineTo(x + w * 0.66, y + h * 0.42);
+  g.lineTo(x + w * 0.78, y + h * 0.3); g.lineTo(x + w, y + h);
+  g.closePath(); g.fill(); g.stroke();
+  // 内部横线（数字地形感）
+  for (let i = 1; i < 5; i++) {
+    g.beginPath();
+    g.moveTo(x + w * 0.1 * i, y + h - h * 0.14 * i);
+    g.lineTo(x + w * 0.9 - w * 0.06 * i, y + h - h * 0.14 * i);
+    g.globalAlpha = glow * 0.35; g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+neonMt(20, 180, 420, 260, 0.9);
+neonMt(480, 160, 460, 280, 0.7);
+neonMt(240, 250, 520, 210, 0.45);
+
+// 数据雨（细竖线）
+g.shadowBlur = 0;
+for (let i = 0; i < 30; i++) {
+  g.strokeStyle = i % 3 ? 'rgba(77,232,255,.14)' : 'rgba(255,90,208,.12)';
+  const x = (i * 137) % 960, y = (i * 89) % 560, l = 30 + (i * 53 % 90);
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + l); g.stroke();
+}
+
+// 地面网格（透视）
+g.strokeStyle = 'rgba(77,232,255,.35)'; g.lineWidth = 1;
+for (let i = 0; i <= 14; i++) {
+  const t = i / 14;
+  g.beginPath(); g.moveTo(0, 480 + t * t * 130); g.lineTo(960, 480 + t * t * 130); g.stroke();
+}
+for (let i = -8; i <= 8; i++) {
+  g.beginPath(); g.moveTo(480 + i * 30, 470); g.lineTo(480 + i * 160, 610); g.stroke();
+}
+
+// 发光阵法（人物脚下的法阵：双环 + 符文刻度 + 三角）
+function array(x, y, r) {
+  g.strokeStyle = MG; g.shadowColor = MG; g.shadowBlur = 16; g.lineWidth = 2.4;
+  g.beginPath(); g.ellipse(x, y, r, r * 0.32, 0, 0, 7); g.stroke();
+  g.beginPath(); g.ellipse(x, y, r * 0.62, r * 0.2, 0, 0, 7); g.globalAlpha = .7; g.stroke(); g.globalAlpha = 1;
+  // 刻度符文
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2;
+    const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r * 0.32;
+    g.fillStyle = i % 3 === 0 ? '#fff' : MG;
+    g.fillRect(px - 2, py - 2, 4, 4);
+  }
+  // 内接三角
+  g.strokeStyle = CY; g.shadowColor = CY;
+  g.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const a = -Math.PI / 2 + i * Math.PI * 2 / 3;
+    const px = x + Math.cos(a) * r * 0.8, py = y + Math.sin(a) * r * 0.26;
+    i ? g.lineTo(px, py) : g.moveTo(px, py);
+  }
+  g.closePath(); g.stroke();
+  g.shadowBlur = 0;
+}
+array(480, 480, 170);
+
+// 人物：霓虹描线修士
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.shadowColor = CY; g.shadowBlur = 14; g.strokeStyle = CY; g.lineWidth = 2.6; g.fillStyle = 'rgba(6,10,26,.9)';
+  // 袍
+  g.beginPath();
+  g.moveTo(-13, -44); g.quadraticCurveTo(-28, -6, -21, 3);
+  g.quadraticCurveTo(0, 12, 21, 3); g.quadraticCurveTo(28, -6, 13, -44);
+  g.closePath(); g.fill(); g.stroke();
+  // 头 + 髻
+  g.beginPath(); g.arc(0, -56, 10, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(6, -66); g.lineTo(9, -76); g.stroke();
+  // 面部:发光目镜线
+  g.strokeStyle = MG; g.shadowColor = MG; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(-6, -57); g.lineTo(-2, -57); g.stroke();
+  g.beginPath(); g.moveTo(2, -57); g.lineTo(6, -57); g.stroke();
+  g.beginPath(); g.moveTo(-6, -57); g.quadraticCurveTo(-4, -60, -2, -57); g.stroke();
+  // 背后数据剑（垂直光剑）
+  g.strokeStyle = '#fff'; g.shadowColor = '#fff'; g.lineWidth = 3.4;
+  g.beginPath(); g.moveTo(20, -84); g.lineTo(26, -2); g.stroke();
+  g.strokeStyle = MG; g.lineWidth = 6; g.globalAlpha = .3;
+  g.beginPath(); g.moveTo(20, -84); g.lineTo(26, -2); g.stroke(); g.globalAlpha = 1;
+  g.restore();
+  g.shadowBlur = 0;
+}
+person(480, 478, 1.8);
+
+// 全息道具（悬浮托盘）
+function holo(x, y, c, draw) {
+  g.strokeStyle = 'rgba(120,200,255,.5)'; g.lineWidth = 1;
+  g.beginPath(); g.ellipse(x, y + 26, 30, 8, 0, 0, 7); g.stroke();
+  g.shadowColor = c; g.shadowBlur = 12; g.strokeStyle = c; g.lineWidth = 2.2;
+  draw(x, y);
+  g.shadowBlur = 0;
+}
+holo(180, 520, MG, (x, y) => { g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke(); g.beginPath(); g.arc(x, y, 5, 0, 7); g.stroke(); });
+holo(820, 520, CY, (x, y) => { g.beginPath(); g.moveTo(x - 26, y + 8); g.lineTo(x + 26, y - 8); g.stroke(); g.beginPath(); g.moveTo(x - 8, y + 14); g.lineTo(x + 8, y - 14); g.stroke(); });
+holo(900, 480, '#ffd75e', (x, y) => { g.beginPath(); g.arc(x, y + 8, 12, 0, 7); g.stroke(); g.beginPath(); g.arc(x, y - 8, 7, 0, 7); g.stroke(); });
+</script>
+</body>
+</html>

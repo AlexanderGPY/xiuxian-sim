@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张17 · 8-bit 掌机</title>
+<style>
+  body{margin:0;background:#202020;height:100vh;display:flex;align-items:center;justify-content:center;font-family:monospace}
+  canvas{max-width:96vw;max-height:92vh;image-rendering:pixelated;box-shadow:0 0 60px rgba(140,190,80,.25)}
+  .tag{position:fixed;top:10px;left:16px;color:#9bbc0f;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#5a705a;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="160" height="144"></canvas>
+<div class="tag">17 · 8-bit 掌机</div>
+<div class="cap">四阶绿 + 大颗粒 —— 极致复古情怀，性能最省</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const C0 = '#0f380f', C1 = '#306230', C2 = '#8bac0f', C3 = '#9bbc0f';
+function px(x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+
+// 天
+px(0, 0, 160, 60, C3);
+for (let x = 0; x < 160; x += 4) if ((x / 4) % 2) px(x, 58, 4, 2, C2);
+
+// 点缀云（阶梯块）
+function cloud(x, y) {
+  px(x, y, 14, 4, C2); px(x + 3, y - 3, 8, 3, C2); px(x + 14, y + 2, 8, 2, C2);
+}
+cloud(14, 12); cloud(90, 8); cloud(120, 22);
+
+// 阶梯山
+function mt(cx, base, half, h, c, cap) {
+  for (let i = 0; i < h; i++) {
+    const w = Math.max(1, Math.round(half * (1 - i / h)));
+    px(cx - w, base - i * 2, w * 2, 2, i < 3 && cap ? C3 : c);
+  }
+}
+mt(28, 60, 26, 12, C0, true);
+mt(76, 60, 34, 16, C1, true);
+mt(128, 60, 28, 13, C0, true);
+
+// 地面
+px(0, 60, 160, 84, C2);
+for (let x = 0; x < 160; x += 6) px(x, 60 + (x % 12 ? 0 : 2), 3, 1, C1);
+px(0, 60, 160, 2, C1);
+
+// 水（右下小池）
+px(100, 96, 56, 40, C1);
+for (let y = 98; y < 136; y += 5) for (let x = 102 + (y % 10); x < 152; x += 8) px(x, y, 3, 1, C2);
+
+// 松
+function tree(x, y) {
+  px(x + 2, y + 8, 2, 5, C0);
+  px(x, y + 6, 6, 2, C0); px(x + 1, y + 3, 4, 2, C0); px(x + 2, y, 2, 2, C0);
+}
+tree(8, 70); tree(30, 78); tree(90, 74);
+
+// 小屋
+px(52, 74, 22, 12, C1); px(52, 74, 22, 2, C0);
+px(50, 70, 26, 4, C0); px(58, 70, 10, 2, C3);
+px(60, 78, 5, 8, C0); px(68, 77, 4, 4, C3);
+
+// 修士（12×16）
+const MAN = [
+  '....xxxx....', '...xxxxxx...', '...xoooox...',
+  '...oooooo...', '....oooo....',
+  '..gggggggg..', '.gggggggggg.', 'ggoooggooogg'.replace(/oo/g, 'oo'),
+  'ggooggggoog g'.replace(' ', ''), '.gggggggggg.', '.gggggggg g.'.replace(' ', ''),
+  '..gggggggg..', '..gg gg gg..'.replace(/ /g, ''), '..gg...gg...',
+  '..xx...xx...', '..xx...xx...',
+];
+const MAPC = { x: C0, o: C2, g: C1 };
+function sprite(sp, x, y) {
+  for (let j = 0; j < sp.length; j++) for (let i = 0; i < sp[j].length; i++) {
+    const c = MAPC[sp[j][i]]; if (c) px(x + i, y + j, 1, 1, c);
+  }
+}
+sprite(MAN, 20, 96);
+
+// 道具（岸上排开）
+px(52, 104, 6, 6, C0); px(53, 105, 2, 2, C2);            // 丹
+px(66, 100, 2, 14, C2); px(64, 106, 6, 1, C0); px(67, 113, 3, 3, C0);  // 剑
+px(80, 103, 5, 5, C0); px(81, 108, 3, 3, C0); px(82, 101, 1, 2, C0);   // 葫芦
+
+// 顶部状态条（文字太细画不了，用块模拟 HUD）
+px(0, 0, 160, 8, C0);
+px(2, 2, 40, 4, C1); px(44, 2, 30, 4, C2); px(120, 2, 10, 4, C2); px(132, 2, 10, 4, C2); px(144, 2, 10, 4, C2);
+px(122, 2, 6, 4, C0); px(134, 2, 4, 4, C0); px(146, 2, 8, 4, C0);
+</script>
+</body>
+</html>

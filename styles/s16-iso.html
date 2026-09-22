@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张16 · 等距仙居</title>
+<style>
+  body{margin:0;background:#1a2130;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#c8d8e8;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#68809a;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">16 · 等距仙居</div>
+<div class="cap">2:1 菱形地块 + 悬浮岛 —— 与建造/风水系统最合拍</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const CX = 480, CY = 320, TW = 64, TH = 32;   // 菱形半宽高
+
+g.fillStyle = '#1a2130'; g.fillRect(0, 0, 960, 600);
+
+// 世界坐标(菱形格) → 屏幕
+function iso(x, y, z) {
+  return [CX + (x - y) * TW / 2, CY + (x + y) * TH / 2 - (z || 0)];
+}
+// 一块地砖（顶面 + 左右侧面）
+function tile(x, y, top, left, right, h) {
+  h = h || 14;
+  const [tx, ty] = iso(x, y, 0);
+  // 顶面
+  g.fillStyle = top;
+  g.beginPath();
+  g.moveTo(tx, ty); g.lineTo(tx + TW / 2, ty + TH / 2);
+  g.lineTo(tx, ty + TH); g.lineTo(tx - TW / 2, ty + TH / 2);
+  g.closePath(); g.fill();
+  // 左侧面
+  g.fillStyle = left;
+  g.beginPath();
+  g.moveTo(tx - TW / 2, ty + TH / 2); g.lineTo(tx, ty + TH);
+  g.lineTo(tx, ty + TH + h); g.lineTo(tx - TW / 2, ty + TH / 2 + h);
+  g.closePath(); g.fill();
+  // 右侧面
+  g.fillStyle = right;
+  g.beginPath();
+  g.moveTo(tx + TW / 2, ty + TH / 2); g.lineTo(tx, ty + TH);
+  g.lineTo(tx, ty + TH + h); g.lineTo(tx + TW / 2, ty + TH / 2 + h);
+  g.closePath(); g.fill();
+}
+const GT = '#7cb06a', GL = '#5a8a4c', GR = '#4a7640';
+const DT = '#8a6f4e', DL = '#6a533a', DR = '#584430';
+
+// 悬浮岛（7×7 菱形，边缘下垂两层）
+for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
+  const edge = Math.min(x, y, 6 - x, 6 - y);
+  if (edge === 0) continue;                       // 缺角成不规则岛
+  tile(x - 3 + y * 0, y, GT, GL, GR);             // 顶面草地
+}
+// 底层土（第二层，稍小）
+for (let y = 1; y < 6; y++) for (let x = 1; x < 6; x++) {
+  const [tx, ty] = iso(x - 3, y);
+  g.fillStyle = DL;
+  g.beginPath();
+  g.moveTo(tx - TW / 2, ty + TH / 2 + 14); g.lineTo(tx, ty + TH + 14);
+  g.lineTo(tx, ty + TH + 30); g.lineTo(tx - TW / 2, ty + TH / 2 + 30);
+  g.closePath(); g.fill();
+  g.fillStyle = DR;
+  g.beginPath();
+  g.moveTo(tx + TW / 2, ty + TH / 2 + 14); g.lineTo(tx, ty + TH + 14);
+  g.lineTo(tx, ty + TH + 30); g.lineTo(tx + TW / 2, ty + TH / 2 + 30);
+  g.closePath(); g.fill();
+}
+// 岛底倒锥
+const [bx, by] = iso(0, 3);
+g.fillStyle = '#3e5c36';
+g.beginPath();
+g.moveTo(bx - TW * 2.5, by + TH * 1.5 + 30); g.lineTo(bx + TW * 2.5, by + TH * 1.5 + 30);
+g.lineTo(bx, by + TH * 2 + 110); g.closePath(); g.fill();
+
+// 悬浮小石（配飞岛感）
+function floatRock(x, y, s) {
+  g.fillStyle = '#6a7a8a';
+  g.beginPath();
+  g.moveTo(x - 22 * s, y); g.lineTo(x - 8 * s, y - 12 * s); g.lineTo(x + 12 * s, y - 8 * s);
+  g.lineTo(x + 20 * s, y + 2 * s); g.lineTo(x + 4 * s, y + 10 * s); g.lineTo(x - 14 * s, y + 8 * s);
+  g.closePath(); g.fill();
+  g.fillStyle = '#8a9aa8';
+  g.beginPath(); g.moveTo(x - 8 * s, y - 12 * s); g.lineTo(x + 12 * s, y - 8 * s); g.lineTo(x + 2 * s, y - 2 * s); g.lineTo(x - 12 * s, y - 4 * s);
+  g.closePath(); g.fill();
+}
+floatRock(150, 200, 1); floatRock(830, 260, 0.8); floatRock(760, 130, 0.5);
+
+// 凉亭（iso 建筑在格 (1,-1) 上方）
+function pavilion(gx, gy) {
+  const [x, y] = iso(gx, gy, 0);
+  const h = 40;
+  // 柱
+  g.fillStyle = '#8a5a3a';
+  [-18, 18].forEach(dx => g.fillRect(x + dx - 2, y - h + 6, 4, h - 6));
+  g.fillStyle = '#a06a44';
+  [-12, 12].forEach(dx => g.fillRect(x + dx - 2, y - h + 10, 4, h - 12));
+  // 台
+  g.fillStyle = '#c8b490';
+  g.beginPath(); g.ellipse(x, y + 2, 30, 15, 0, 0, 7); g.fill();
+  // 顶（两层四坡）
+  g.fillStyle = '#4a6a8a';
+  g.beginPath();
+  g.moveTo(x - 34, y - h + 4); g.lineTo(x, y - h - 14); g.lineTo(x + 34, y - h + 4); g.lineTo(x, y - h + 18);
+  g.closePath(); g.fill();
+  g.fillStyle = '#5a7a9a';
+  g.beginPath();
+  g.moveTo(x - 22, y - h - 12); g.lineTo(x, y - h - 26); g.lineTo(x + 22, y - h - 12); g.lineTo(x, y - h + 2);
+  g.closePath(); g.fill();
+  // 顶珠
+  g.fillStyle = '#e8c86a'; g.beginPath(); g.arc(x, y - h - 32, 4, 0, 7); g.fill();
+}
+pavilion(-2, -1);
+
+// iso 小人（站在格 (0,1)）
+function person(gx, gy) {
+  const [x, y] = iso(gx, gy, 0);
+  g.fillStyle = 'rgba(0,0,0,.25)';
+  g.beginPath(); g.ellipse(x, y + 4, 14, 6, 0, 0, 7); g.fill();
+  g.fillStyle = '#3d5378';
+  g.beginPath();
+  g.moveTo(x - 9, y - 26); g.quadraticCurveTo(x - 14, y - 6, x - 10, y - 2);
+  g.quadraticCurveTo(x, y + 3, x + 10, y - 2); g.quadraticCurveTo(x + 14, y - 6, x + 9, y - 26);
+  g.closePath(); g.fill();
+  g.fillStyle = '#e8b48c'; g.beginPath(); g.arc(x, y - 34, 7, 0, 7); g.fill();
+  g.fillStyle = '#22283a'; g.beginPath(); g.arc(x, y - 37, 7, Math.PI, 0); g.fill();
+  g.beginPath(); g.arc(x + 4, y - 45, 3.4, 0, 7); g.fill();
+  g.fillStyle = '#c85a4a'; g.fillRect(x - 8, y - 16, 16, 3.4);
+}
+person(0, 1);
+
+// iso 松树（格 (2,2) 与 (-2,2)）
+function tree(gx, gy, s) {
+  const [x, y] = iso(gx, gy, 0);
+  g.fillStyle = 'rgba(0,0,0,.25)';
+  g.beginPath(); g.ellipse(x, y + 3, 16 * s, 7 * s, 0, 0, 7); g.fill();
+  g.fillStyle = '#7a5638'; g.fillRect(x - 2.4 * s, y - 20 * s, 4.8 * s, 20 * s);
+  ['#3c7a52', '#4c9262', '#3c7a52'].forEach((c, i) => {
+    const w = (22 - i * 5) * s, ty = y - (26 + i * 13) * s;
+    g.fillStyle = c;
+    g.beginPath();
+    g.moveTo(x - w, ty + 10 * s); g.lineTo(x, ty - 8 * s); g.lineTo(x + w, ty + 10 * s);
+    g.closePath(); g.fill();
+  });
+}
+tree(2, 2, 1); tree(-2, 2, 0.8);
+
+// iso 道具（格 (1,2) 附近排开）
+function itemPill(gx, gy) {
+  const [x, y] = iso(gx, gy, 0);
+  g.fillStyle = '#e0705c'; g.beginPath(); g.arc(x, y - 8, 8, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(x - 2.6, y - 10.6, 2.4, 0, 7); g.fill();
+}
+function itemSword(gx, gy) {
+  const [x, y] = iso(gx, gy, 0);
+  g.save(); g.translate(x, y - 6); g.rotate(-0.7);
+  g.fillStyle = '#b8d0e8'; g.fillRect(-16, -2.6, 30, 5.2);
+  g.fillStyle = '#c8a05a'; g.fillRect(14, -6, 4, 12); g.fillRect(-20, -2, 4, 4);
+  g.restore();
+}
+function itemGourd(gx, gy) {
+  const [x, y] = iso(gx, gy, 0);
+  g.fillStyle = '#9ab88a';
+  g.beginPath(); g.arc(x, y - 8, 8.4, 0, 7); g.fill();
+  g.beginPath(); g.arc(x, y - 19, 5.4, 0, 7); g.fill();
+  g.fillStyle = '#c8a06a'; g.fillRect(x - 1.8, y - 27, 3.6, 4);
+}
+itemPill(1, 2); itemSword(2, 0); itemGourd(-1, -1);
+</script>
+</body>
+</html>

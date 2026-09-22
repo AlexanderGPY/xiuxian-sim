@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张12 · 浮世绘版画</title>
+<style>
+  body{margin:0;background:#d8cdb4;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+  .tag{position:fixed;top:10px;left:16px;color:#3a3226;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#8a7f66;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">12 · 浮世绘版画</div>
+<div class="cap">普鲁士蓝平涂 + 黑键线 + 爪浪 —— 视觉记忆点最强</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const BLUE = '#1d4e89', BLUE2 = '#2e6cae', CREAM = '#f2e8ce', INK = '#26221a';
+
+g.fillStyle = CREAM; g.fillRect(0, 0, 960, 600);
+// 版画纸的横纹
+g.strokeStyle = 'rgba(120,100,70,.08)';
+for (let y = 0; y < 600; y += 3) { g.beginPath(); g.moveTo(0, y); g.lineTo(960, y); g.stroke(); }
+
+// 远山（平涂蓝山 + 白雪帽，黑键线）
+function fuji(x, y, w, h, body, cap) {
+  g.fillStyle = body;
+  g.beginPath();
+  g.moveTo(x, y);
+  g.lineTo(x + w * 0.42, y - h * 0.72);
+  g.lineTo(x + w * 0.5, y - h);
+  g.lineTo(x + w * 0.56, y - h * 0.66);
+  g.lineTo(x + w, y);
+  g.closePath(); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 2.4; g.stroke();
+  // 雪帽
+  g.fillStyle = cap;
+  g.beginPath();
+  g.moveTo(x + w * 0.36, y - h * 0.56);
+  g.lineTo(x + w * 0.45, y - h * 0.86);
+  g.lineTo(x + w * 0.5, y - h * 0.98);
+  g.lineTo(x + w * 0.55, y - h * 0.8);
+  g.lineTo(x + w * 0.63, y - h * 0.5);
+  g.quadraticCurveTo(x + w * 0.5, y - h * 0.42, x + w * 0.36, y - h * 0.56);
+  g.closePath(); g.fill();
+  g.stroke();
+}
+fuji(230, 360, 380, 250, '#bcd8e8', CREAM);
+g.globalAlpha = 0.5; fuji(80, 330, 260, 160, '#8fb8d4', CREAM); g.globalAlpha = 1;
+
+// 大浪（神奈川风格爪浪）
+function wave(x, y, s) {
+  g.fillStyle = BLUE;
+  g.beginPath();
+  g.moveTo(x, y + 120 * s);
+  g.bezierCurveTo(x - 30 * s, y + 60 * s, x - 10 * s, y + 10 * s, x + 40 * s, y - 10 * s);
+  g.bezierCurveTo(x + 90 * s, y - 26 * s, x + 150 * s, y - 20 * s, x + 170 * s, y + 6 * s);
+  g.bezierCurveTo(x + 185 * s, y + 30 * s, x + 160 * s, y + 70 * s, x + 140 * s, y + 120 * s);
+  g.closePath(); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 3; g.stroke();
+  // 浪爪
+  g.fillStyle = BLUE2;
+  g.beginPath();
+  g.moveTo(x + 42 * s, y - 8 * s);
+  g.quadraticCurveTo(x + 20 * s, y - 44 * s, x + 52 * s, y - 74 * s);
+  g.quadraticCurveTo(x + 46 * s, y - 40 * s, x + 72 * s, y - 58 * s);
+  g.quadraticCurveTo(x + 62 * s, y - 28 * s, x + 88 * s, y - 46 * s);
+  g.quadraticCurveTo(x + 76 * s, y - 16 * s, x + 100 * s, y - 30 * s);
+  g.quadraticCurveTo(x + 90 * s, y - 4 * s, x + 116 * s, y - 14 * s);
+  g.quadraticCurveTo(x + 120 * s, y + 8 * s, x + 140 * s, y + 2 * s);
+  g.quadraticCurveTo(x + 100 * s, y + 22 * s, x + 60 * s, y + 14 * s);
+  g.closePath(); g.fill(); g.stroke();
+  // 爪尖白点
+  g.fillStyle = CREAM;
+  [[52, -74], [72, -58], [88, -46], [100, -30], [116, -14]].forEach(([dx, dy]) => {
+    g.beginPath(); g.arc(x + dx * s, y + dy * s, 3 * s, 0, 7); g.fill();
+  });
+}
+wave(-30, 480, 1.15);
+wave(300, 500, 0.9);
+wave(560, 490, 1.05);
+
+// 云(平涂带状)
+g.fillStyle = '#d8e2ea';
+[[80, 90, 150], [420, 60, 200], [740, 110, 160]].forEach(([x, y, w]) => {
+  g.beginPath();
+  g.moveTo(x, y); g.quadraticCurveTo(x + w * 0.3, y - 18, x + w * 0.55, y - 4);
+  g.quadraticCurveTo(x + w * 0.8, y + 8, x + w, y - 6);
+  g.lineTo(x + w, y + 12); g.quadraticCurveTo(x + w * 0.5, y + 22, x, y + 12);
+  g.closePath(); g.fill();
+});
+
+// 人物：版画风修士（平涂 + 粗键线）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.lineWidth = 2.6; g.strokeStyle = INK;
+  // 袍(藏蓝平涂)
+  g.fillStyle = '#33415c';
+  g.beginPath();
+  g.moveTo(-14, -48); g.quadraticCurveTo(-32, -8, -24, 2);
+  g.quadraticCurveTo(0, 12, 24, 2); g.quadraticCurveTo(32, -8, 14, -48);
+  g.closePath(); g.fill(); g.stroke();
+  // 内衬(米)
+  g.fillStyle = CREAM;
+  g.beginPath();
+  g.moveTo(-4, -46); g.quadraticCurveTo(0, -30, 12, -44); g.lineTo(6, -22);
+  g.quadraticCurveTo(0, -18, -2, -34); g.closePath(); g.fill(); g.stroke();
+  // 头 + 髻 + 斗笠
+  g.fillStyle = '#e8d0b0';
+  g.beginPath(); g.arc(0, -60, 10, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = INK; g.beginPath(); g.arc(6, -72, 5, 0, 7); g.fill();
+  g.fillStyle = '#b08d4a';
+  g.beginPath(); g.moveTo(-20, -66); g.quadraticCurveTo(0, -88, 20, -66);
+  g.quadraticCurveTo(0, -58, -20, -66); g.closePath(); g.fill(); g.stroke();
+  // 拱手袖
+  g.fillStyle = '#33415c';
+  g.beginPath(); g.ellipse(0, -26, 13, 7, 0, 0, 7); g.fill(); g.stroke();
+  g.restore();
+}
+person(700, 430, 1.7);
+
+// 版画道具（平涂+键线）
+function pill(x, y) {
+  g.fillStyle = '#c85a4a'; g.beginPath(); g.arc(x, y, 15, 0, 7); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 2.4; g.stroke();
+  g.fillStyle = CREAM; g.beginPath(); g.arc(x - 4, y - 5, 4, 0, 7); g.fill();
+}
+function sword(x, y) {
+  g.save(); g.translate(x, y); g.rotate(-0.3);
+  g.fillStyle = '#8a95a8'; g.beginPath(); g.roundRect(-50, -6, 92, 12, 5); g.fill(); g.stroke();
+  g.fillStyle = '#c8a05a'; g.fillRect(42, -13, 8, 26); g.strokeRect(42, -13, 8, 26);
+  g.restore();
+}
+function gourd(x, y) {
+  g.fillStyle = '#7a9a6a';
+  g.beginPath(); g.arc(x, y + 12, 15, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.arc(x, y - 8, 9, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#b08d4a'; g.fillRect(x - 3, y - 20, 6, 7); g.strokeRect(x - 3, y - 20, 6, 7);
+}
+pill(830, 510); sword(880, 545); gourd(120, 545);
+
+// 角落印
+g.fillStyle = '#c0402e'; g.fillRect(886, 30, 36, 36);
+g.fillStyle = CREAM; g.font = '13px "Kaiti SC",serif'; g.textAlign = 'center';
+g.fillText('云', 904, 45); g.fillText('隐', 904, 60);
+</script>
+</body>
+</html>

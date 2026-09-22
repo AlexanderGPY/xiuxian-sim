@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张02 · 像素复古</title>
+<style>
+  body{margin:0;background:#1a1c2c;height:100vh;display:flex;align-items:center;justify-content:center;font-family:monospace}
+  canvas{max-width:96vw;max-height:92vh;image-rendering:pixelated;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#f4f4f4;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#94b0c2;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="160" height="100"></canvas>
+<div class="tag">02 · 像素复古（16-bit）</div>
+<div class="cap">160×100 逻辑像素逐点绘制 —— 亲和怀旧，图标/动画最省力</div>
+<script>
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const P = {
+  sky1: '#4ea3c9', sky2: '#7cc4de', sky3: '#c9e8f0',
+  sun: '#ffd75e', m1: '#3a7d5e', m2: '#2c5f7c', m3: '#1f3c53',
+  water: '#3e8fa8', water2: '#5fb3c4', sand: '#d9c48a',
+  ink: '#222233', robe: '#5d6bb0', robe2: '#454f85', skin: '#f0c8a0',
+  hair: '#2b2b3d', red: '#d75a4a', gold: '#f2c14e', wood: '#8a5a33', white: '#f4f4f4',
+};
+function px(x, y, w, h, c) { g.fillStyle = c; g.fillRect(x, y, w, h); }
+
+// 天空三段 + 抖动过渡
+px(0, 0, 160, 34, P.sky1); px(0, 34, 160, 18, P.sky2); px(0, 52, 160, 12, P.sky3);
+for (let x = 0; x < 160; x += 2) { px(x, 33 + (x / 2 % 2), 1, 1, P.sky2); px(x, 51 + (x / 2 % 2), 1, 1, P.sky3); }
+// 太阳
+px(124, 10, 12, 12, P.sun); px(126, 8, 8, 2, P.sky1); px(126, 22, 8, 2, P.sky1); px(122, 12, 2, 8, P.sky1); px(134, 12, 2, 8, P.sky1);
+// 三层阶梯山
+function mount(cx, base, half, h, c) {
+  for (let i = 0; i < h; i++) {
+    const w = Math.round(half * (1 - i / h));
+    px(cx - w, base - i * 2, w * 2, 2, c);
+  }
+}
+mount(30, 64, 26, 13, P.m2); mount(78, 64, 20, 10, P.m1); mount(126, 64, 30, 14, P.m2);
+mount(52, 64, 14, 7, P.m3); mount(104, 64, 12, 6, P.m3);
+// 雪顶
+px(24, 38, 12, 2, P.white); px(120, 36, 14, 2, P.white); px(26, 40, 8, 2, P.white); px(122, 38, 10, 2, P.white);
+// 水面
+px(0, 64, 160, 36, P.water);
+for (let y = 66; y < 100; y += 4) for (let x = (y * 3) % 8; x < 160; x += 8) px(x, y, 3, 1, P.water2);
+// 岸
+px(0, 64, 34, 6, P.sand);
+
+// 字符画精灵：修士 12×20
+const C = { '.': null, k: P.ink, r: P.robe, d: P.robe2, s: P.skin, h: P.hair, g: P.gold, w: P.white };
+const MAN = [
+  '....hhhh....', '...hhhhhh...', '...hssssh...',
+  '...ssssss...', '...ssssss...', '....ssss....',
+  '..rrrrrrrr..', '.rrrrrrrrrr.', 'drrssssrrrrd',
+  'drrssssrrrrd', 'drrrrrrrrrrd', '.rrrrrrrrrd.',
+  '.drrrrrrrd..', '..drrrrrd...', '..drrrrrd...',
+  '..drrrrrd...', '..drr.rrd...', '..dd...dd...',
+  '..kk...kk...', '..kk...kk...',
+];
+function sprite(sp, x, y) {
+  for (let j = 0; j < sp.length; j++) for (let i = 0; i < sp[j].length; i++) {
+    const c = C[sp[j][i]]; if (c) px(x + i, y + j, 1, 1, c);
+  }
+}
+sprite(MAN, 24, 40);
+
+// 松树
+function tree(x, y) {
+  px(x + 3, y + 10, 2, 5, P.wood);
+  px(x, y + 8, 8, 2, P.m1); px(x + 1, y + 5, 6, 2, P.m1); px(x + 2, y + 2, 4, 2, P.m1); px(x + 3, y, 2, 2, P.m1);
+}
+tree(6, 52); tree(44, 50);
+
+// 道具：丹/剑/葫芦（浮在右下水面上的一块木板）
+px(118, 84, 38, 8, P.wood); px(118, 92, 38, 2, P.wood);
+px(126, 79, 6, 6, P.red); px(127, 80, 2, 2, P.white);
+px(138, 74, 2, 22, P.gold); px(136, 82, 6, 2, P.wood); px(137, 94, 4, 3, P.red);
+px(150, 76, 4, 4, P.red); px(149, 80, 6, 6, P.red); px(150, 73, 2, 3, P.wood);
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张05 · 暗黑仙侠</title>
+<style>
+  body{margin:0;background:#08070c;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.8)}
+  .tag{position:fixed;top:10px;left:16px;color:#cbbfe6;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#6f648a;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">05 · 暗黑仙侠</div>
+<div class="cap">压黑 + 边缘光 + 余烬 —— 战斗氛围最强，越夜越燃</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+
+// 夜空
+const sky = g.createLinearGradient(0, 0, 0, 600);
+sky.addColorStop(0, '#0b0916'); sky.addColorStop(0.6, '#141024'); sky.addColorStop(1, '#1c1424');
+g.fillStyle = sky; g.fillRect(0, 0, 960, 600);
+
+// 冷月
+const moon = g.createRadialGradient(750, 120, 6, 750, 120, 90);
+moon.addColorStop(0, 'rgba(225,220,255,.95)'); moon.addColorStop(0.25, 'rgba(190,180,230,.5)'); moon.addColorStop(1, 'rgba(120,100,180,0)');
+g.fillStyle = moon; g.beginPath(); g.arc(750, 120, 90, 0, 7); g.fill();
+g.fillStyle = '#ded8f5'; g.beginPath(); g.arc(750, 120, 26, 0, 7); g.fill();
+
+// 远山：黑块 + 顶部边缘光
+function mt(x, y, w, h, base, rim) {
+  g.fillStyle = base;
+  g.beginPath();
+  g.moveTo(x, y + h);
+  g.bezierCurveTo(x + w * 0.15, y + h * 0.3, x + w * 0.4, y + h * 0.12, x + w * 0.5, y);
+  g.bezierCurveTo(x + w * 0.62, y + h * 0.16, x + w * 0.85, y + h * 0.42, x + w, y + h);
+  g.closePath(); g.fill();
+  g.strokeStyle = rim; g.lineWidth = 2; g.globalAlpha = 0.8;
+  g.beginPath();
+  g.moveTo(x + 2, y + h - 4);
+  g.bezierCurveTo(x + w * 0.15, y + h * 0.3, x + w * 0.4, y + h * 0.12, x + w * 0.5, y + 2);
+  g.stroke();
+  g.globalAlpha = 1;
+}
+mt(30, 160, 380, 300, '#120e1e', '#4d3f78');
+mt(560, 150, 420, 320, '#0f0c19', '#5a4a8a');
+mt(230, 260, 560, 240, '#0b0813', '#3a2f5c');
+
+// 石台
+g.fillStyle = '#0d0a16';
+g.beginPath();
+g.moveTo(380, 520); g.lineTo(420, 440); g.lineTo(560, 440); g.lineTo(600, 520); g.closePath(); g.fill();
+g.strokeStyle = '#5a4a8a'; g.lineWidth = 1.6; g.globalAlpha = .6;
+g.beginPath(); g.moveTo(420, 442); g.lineTo(560, 442); g.stroke(); g.globalAlpha = 1;
+
+// 人物：剪影 + 青紫轮廓光 + 飘带
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.shadowColor = '#7b6cf0'; g.shadowBlur = 18;
+  g.strokeStyle = '#8d7ff5'; g.lineWidth = 3;
+  // 轮廓一笔
+  g.beginPath();
+  g.moveTo(-11, -42);
+  g.quadraticCurveTo(-24, -8, -19, 2);
+  g.quadraticCurveTo(0, 10, 19, 2);
+  g.quadraticCurveTo(24, -8, 11, -42);
+  g.stroke();
+  // 头
+  g.beginPath(); g.arc(0, -52, 9, 0, 7); g.stroke();
+  // 剪影填充
+  g.shadowBlur = 0; g.fillStyle = '#060510';
+  g.beginPath();
+  g.moveTo(-10, -41); g.quadraticCurveTo(-23, -8, -18, 1);
+  g.quadraticCurveTo(0, 9, 18, 1); g.quadraticCurveTo(23, -8, 10, -41);
+  g.closePath(); g.fill();
+  g.beginPath(); g.arc(0, -52, 8, 0, 7); g.fill();
+  // 眼睛发光
+  g.fillStyle = '#9d8cff'; g.fillRect(-4.5, -54, 3, 1.8); g.fillRect(1.5, -54, 3, 1.8);
+  // 飘带
+  g.strokeStyle = '#6f5fe0'; g.lineWidth = 2.4; g.globalAlpha = .85;
+  g.beginPath(); g.moveTo(10, -34); g.quadraticCurveTo(34, -26, 30, -6); g.quadraticCurveTo(28, 4, 36, 12); g.stroke();
+  g.beginPath(); g.moveTo(-10, -30); g.quadraticCurveTo(-30, -18, -26, 0); g.stroke();
+  g.globalAlpha = 1;
+  g.restore();
+}
+person(490, 438, 1.7);
+
+// 巨剑光柱
+const beam = g.createLinearGradient(560, 460, 560, 40);
+beam.addColorStop(0, 'rgba(160,150,255,.0)'); beam.addColorStop(0.5, 'rgba(160,150,255,.35)'); beam.addColorStop(1, 'rgba(160,150,255,0)');
+g.fillStyle = beam; g.fillRect(552, 40, 16, 420);
+g.strokeStyle = '#cfc8ff'; g.lineWidth = 3; g.shadowColor = '#9d8cff'; g.shadowBlur = 14;
+g.beginPath(); g.moveTo(562, 80); g.lineTo(548, 470); g.stroke(); g.shadowBlur = 0;
+
+// 道具祭坛：发光丹/书/珠
+function orb(x, y, r, c) {
+  const gr = g.createRadialGradient(x, y, 1, x, y, r * 2.2);
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.3, c); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r * 2.2, 0, 7); g.fill();
+  g.fillStyle = c; g.beginPath(); g.arc(x, y, r * 0.7, 0, 7); g.fill();
+}
+orb(200, 520, 12, '#e06a4f');
+orb(255, 530, 8, '#7bd0c0');
+orb(830, 500, 10, '#c9a86f');
+
+// 余烬粒子
+g.fillStyle = '#e08a4f';
+const EMB = [[80,300,2],[150,420,1.5],[240,200,1],[330,480,2],[420,150,1.5],[650,320,1],[760,420,2],[880,260,1.5],[910,480,1],[560,540,1.5]];
+for (const [x, y, r] of EMB) { g.globalAlpha = .7; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+g.globalAlpha = 1;
+</script>
+</body>
+</html>

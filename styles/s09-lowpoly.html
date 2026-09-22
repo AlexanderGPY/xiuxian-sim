@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张09 · 低多边形</title>
+<style>
+  body{margin:0;background:#0c1420;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+  .tag{position:fixed;top:10px;left:16px;color:#bcd8e8;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#6a8595;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">09 · 低多边形 Low Poly</div>
+<div class="cap">三角面片 + 平涂分色 —— 现代几何美，远近景天生分层</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+
+// 暮色渐变天
+const sky = g.createLinearGradient(0, 0, 0, 420);
+sky.addColorStop(0, '#1b2a4a'); sky.addColorStop(0.55, '#4a5a8a'); sky.addColorStop(1, '#e8927c');
+g.fillStyle = sky; g.fillRect(0, 0, 960, 420);
+g.fillStyle = '#f5d9a8'; g.fillRect(0, 420, 960, 180);
+
+// 低多边形太阳（棱面圆）
+function tri(a, b, c, color) {
+  g.fillStyle = color;
+  g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]);
+  g.closePath(); g.fill();
+}
+const SX = 700, SY = 150, SR = 52;
+for (let i = 0; i < 10; i++) {
+  const a1 = i / 10 * 7, a2 = (i + 1) / 10 * 7;
+  tri([SX, SY], [SX + Math.cos(a1) * SR, SY + Math.sin(a1) * SR], [SX + Math.cos(a2) * SR, SY + Math.sin(a2) * SR],
+    ['#f5c86a', '#f0a860', '#f8dc96'][i % 3]);
+}
+
+// 三角面山群（手动布点）
+function polyM(baseY, peaks, cols) {
+  // peaks: [ [x,顶点高], ... ]；相邻峰之间谷点
+  const pts = [[-40, baseY]];
+  for (let i = 0; i < peaks.length; i++) {
+    const [x, h] = peaks[i];
+    pts.push([x, baseY - h]);
+    if (i < peaks.length - 1) pts.push([(x + peaks[i + 1][0]) / 2, baseY - h * 0.25]);
+  }
+  pts.push([1000, baseY]);
+  // 相邻点连线构成大三角带，再纵向细分上色
+  for (let i = 0; i < pts.length - 2; i += 2) {
+    const a = pts[i], b = pts[i + 1], c = pts[i + 2];
+    tri(a, b, c, cols[(i / 2) % cols.length]);
+    if (i + 3 < pts.length) {
+      const d = pts[i + 3];
+      tri(b, c, d, cols[(i / 2 + 1) % cols.length]);
+    }
+  }
+  // 雪顶高光面
+  for (let i = 1; i < pts.length; i += 2) {
+    const b = pts[i];
+    g.fillStyle = 'rgba(255,240,230,.85)';
+    g.beginPath();
+    g.moveTo(b[0], b[1]);
+    g.lineTo(b[0] - 26, b[1] + 44); g.lineTo(b[0] - 8, b[1] + 40);
+    g.lineTo(b[0] + 4, b[1] + 56); g.lineTo(b[0] + 22, b[1] + 40);
+    g.closePath(); g.fill();
+  }
+}
+polyM(430, [[150, 240], [330, 180], [520, 260]], ['#2e4468', '#3a5678', '#2a3c5e']);
+polyM(450, [[420, 200], [620, 260], [830, 170]], ['#41608a', '#4d6f9a', '#3a5678']);
+
+// 水面倒影三角
+for (let i = 0; i < 14; i++) {
+  const x = 30 + i * 68, y = 470 + (i % 4) * 22;
+  g.globalAlpha = .18;
+  tri([x, y], [x + 60, y + 8], [x + 30, y + 40], i % 2 ? '#e8927c' : '#4a5a8a');
+  g.globalAlpha = 1;
+}
+
+// 前景岸（绿面片）
+polyM(600, [[60, 90], [260, 130], [560, 100], [860, 140]], ['#3f7a5e', '#4c8f6d', '#356a50']);
+
+// 低模松树（叠三角）
+function tree(x, y, s) {
+  g.fillStyle = '#5a4632';
+  tri([x - 4 * s, y], [x + 4 * s, y], [x + 4 * s, y - 16 * s]); g.fillRect(x - 4 * s, y - 16 * s, 8 * s, 16 * s);
+  const c1 = '#2f6a50', c2 = '#3c8562';
+  tri([x - 26 * s, y - 12 * s], [x + 26 * s, y - 12 * s], [x, y - 52 * s], c1);
+  tri([x - 20 * s, y - 34 * s], [x + 20 * s, y - 34 * s], [x, y - 66 * s], c2);
+  tri([x - 13 * s, y - 52 * s], [x + 13 * s, y - 52 * s], [x, y - 78 * s], c1);
+}
+tree(90, 590, 1.1); tree(880, 596, 1.3);
+
+// 人物：低模修士（面片拼）
+function person(x, y, s) {
+  const A = '#2b3a55', B = '#3d5378', SK = '#e8b48c', R = '#c85a4a';
+  g.save(); g.translate(x, y); g.scale(s, s);
+  // 阴影
+  g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 4, 30, 8, 0, 0, 7); g.fill();
+  // 袍(左右面)
+  tri([-26, 2], [26, 2], [0, -66], A);
+  tri([-26, 2], [0, 2], [0, -66], B);
+  tri([0, 2], [26, 2], [0, -66], A);
+  // 交领
+  tri([-4, -48], [16, -30], [4, -30], B);
+  // 腰带
+  tri([-18, -20], [18, -20], [18, -14], R); g.fillRect(-18, -20, 36, 6);
+  // 头(棱面)
+  tri([-10, -66], [10, -66], [10, -86], SK); tri([-10, -66], [-10, -86], [10, -86], '#d8a078');
+  g.fillStyle = '#22283a';
+  tri([-11, -84], [11, -84], [6, -100], '#22283a'); g.fillRect(-11, -92, 22, 10);
+  g.fillStyle = '#c8a05a'; g.fillRect(2, -104, 5, 6);
+  // 背剑
+  tri([18, -76], [30, -14], [24, -14], '#888'); 
+  g.strokeStyle = '#666'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(14, -52); g.lineTo(28, -46); g.stroke();
+  g.restore();
+}
+person(400, 588, 1.5);
+
+// 道具：棱面宝石风
+function gem(x, y, r, c1, c2) {
+  tri([x - r, y], [x, y - r * 1.2], [x, y], c1);
+  tri([x - r, y], [x, y], [x - r * 0.4, y + r * 0.9], c2);
+  tri([x, y - r * 1.2], [x + r, y], [x, y], c2);
+  tri([x + r, y], [x, y], [x + r * 0.4, y + r * 0.9], c1);
+}
+gem(620, 550, 18, '#e0705c', '#c85a4a');
+g.save(); g.translate(700, 552); g.rotate(-0.3);
+tri([-40, -5], [40, 5], [-40, 5], '#9ab8d8'); tri([-40, -5], [40, 5], [40, -5], '#c8dcf0');
+g.fillStyle = '#c8a05a'; g.fillRect(38, -12, 7, 24); g.restore();
+gem(800, 548, 16, '#78c890', '#5aa876');
+</script>
+</body>
+</html>

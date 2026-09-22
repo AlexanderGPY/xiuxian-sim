@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张04 · 扁平国风海报</title>
+<style>
+  body{margin:0;background:#10151a;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+  .tag{position:fixed;top:10px;left:16px;color:#e8e2d4;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#93a0a8;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">04 · 扁平国风</div>
+<div class="cap">大色块零描边 · 海报构图 —— 现代干净，UI 最百搭</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const M = '#0f3d3e', M2 = '#16544f', M3 = '#2b7a6b', SAND = '#e8d9b8',
+      RED = '#d84f3f', CREAM = '#f4ecd9', INK = '#20313a';
+
+g.fillStyle = SAND; g.fillRect(0, 0, 960, 600);
+
+// 红日
+g.fillStyle = RED; g.beginPath(); g.arc(730, 170, 95, 0, 7); g.fill();
+g.fillStyle = SAND; g.beginPath(); g.arc(700, 200, 60, 0, 7); g.fill();  // 日缺(被山咬一口由后层山覆盖)
+
+// 三层山带(圆弧大色块)
+function band(y, r, color) {
+  g.fillStyle = color;
+  g.beginPath(); g.moveTo(-20, 600); g.lineTo(-20, y);
+  g.arc(180, y, r, Math.PI, 0);
+  g.arc(470, y - 30, r * 1.25, Math.PI, 0);
+  g.arc(790, y + 6, r * 0.95, Math.PI, 0);
+  g.lineTo(980, 600); g.closePath(); g.fill();
+}
+band(360, 150, M3);
+band(430, 170, M2);
+band(500, 150, M);
+
+// 扁平云(胶囊)
+function cloud(x, y, s) {
+  g.fillStyle = CREAM;
+  g.beginPath();
+  g.roundRect(x, y, 120 * s, 26 * s, 13 * s); g.fill();
+  g.beginPath(); g.roundRect(x + 26 * s, y - 16 * s, 68 * s, 22 * s, 11 * s); g.fill();
+}
+cloud(90, 130, 1.1); cloud(560, 90, 0.8); cloud(820, 300, 0.65);
+
+// 水面留白 + 前岸
+g.fillStyle = SAND; g.fillRect(0, 540, 960, 60);
+g.fillStyle = M; g.fillRect(0, 536, 960, 10);
+g.fillStyle = '#e8d9b8';
+for (let x = 40; x < 940; x += 90) { g.fillRect(x, 556, 42, 4); }
+
+// 扁平人物(纯剪影色块 + 一点红腰带)
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.fillStyle = INK;
+  g.beginPath(); g.arc(0, -96, 14, 0, 7); g.fill();                     // 头
+  g.beginPath(); g.arc(7, -110, 7, 0, 7); g.fill();                     // 髻
+  g.beginPath();                                                         // 袍
+  g.moveTo(-10, -80); g.quadraticCurveTo(-34, -10, -26, 0);
+  g.quadraticCurveTo(0, 12, 26, 0); g.quadraticCurveTo(34, -10, 10, -80);
+  g.closePath(); g.fill();
+  g.fillStyle = RED; g.fillRect(-20, -34, 40, 7);                       // 腰带
+  g.beginPath(); g.moveTo(14, -30); g.lineTo(24, -6); g.lineTo(30, -8); g.lineTo(21, -32); g.closePath(); g.fill();
+  g.fillStyle = INK; g.beginPath(); g.ellipse(0, -46, 13, 7, 0, 0, 7); g.fill();  // 拱手
+  g.restore();
+}
+person(300, 540, 1.35);
+
+// 扁平松
+function tree(x, y, s) {
+  g.fillStyle = '#5c4433'; g.fillRect(x - 4 * s, y - 26 * s, 8 * s, 26 * s);
+  g.fillStyle = M2;
+  g.beginPath(); g.ellipse(x, y - 44 * s, 34 * s, 16 * s, 0, 0, 7); g.fill();
+  g.beginPath(); g.ellipse(x - 20 * s, y - 34 * s, 20 * s, 11 * s, 0, 0, 7); g.fill();
+  g.beginPath(); g.ellipse(x + 22 * s, y - 36 * s, 18 * s, 10 * s, 0, 0, 7); g.fill();
+}
+tree(120, 545, 1.2); tree(860, 555, 1);
+
+// 道具：几何大形
+g.fillStyle = RED; g.beginPath(); g.arc(620, 552, 22, 0, 7); g.fill();
+g.fillStyle = SAND; g.beginPath(); g.arc(612, 544, 7, 0, 7); g.fill();
+g.save(); g.translate(710, 556); g.rotate(-0.35);
+g.fillStyle = INK; g.fillRect(-70, -7, 120, 14);
+g.fillStyle = RED; g.fillRect(50, -16, 9, 32); g.fillRect(-78, -6, 10, 10);
+g.restore();
+g.fillStyle = M2;
+g.beginPath(); g.arc(830, 562, 24, 0, 7); g.fill();
+g.beginPath(); g.arc(830, 532, 15, 0, 7); g.fill();
+g.fillStyle = '#5c4433'; g.fillRect(826, 512, 8, 10);
+</script>
+</body>
+</html>

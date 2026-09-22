@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张18 · 国漫厚涂</title>
+<style>
+  body{margin:0;background:#101418;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 10px 50px rgba(0,0,0,.6)}
+  .tag{position:fixed;top:10px;left:16px;color:#ffd88a;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#8a8560;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">18 · 国漫厚涂</div>
+<div class="cap">粗黑描边 + 平色 + 一档阴影 —— 热血张力，动作场面最强</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const INK = '#14100c';
+const KEY = { outline: INK, line: 4.5 };
+
+// 黄昏渐变天
+const sky = g.createLinearGradient(0, 0, 0, 450);
+sky.addColorStop(0, '#2a3050'); sky.addColorStop(0.6, '#c8683e'); sky.addColorStop(1, '#e8a050');
+g.fillStyle = sky; g.fillRect(0, 0, 960, 450);
+g.fillStyle = '#20242e'; g.fillRect(0, 450, 960, 150);
+
+// 大红日（平色 + 环）
+g.fillStyle = '#e84a2a';
+g.beginPath(); g.arc(780, 150, 85, 0, 7); g.fill();
+g.strokeStyle = INK; g.lineWidth = 5;
+g.beginPath(); g.arc(780, 150, 92, 0, 7); g.stroke();
+
+// 速度线（漫画张力）
+g.strokeStyle = 'rgba(255,235,200,.5)'; g.lineWidth = 3;
+for (let i = 0; i < 7; i++) {
+  const y = 60 + i * 34;
+  g.beginPath(); g.moveTo(0, y); g.lineTo(140 + (i % 3) * 80, y - 12); g.stroke();
+}
+
+// 远山（剪影+描边）
+function mt(x, y, w, h, c) {
+  g.fillStyle = c; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath();
+  g.moveTo(x, y + h);
+  g.lineTo(x + w * 0.22, y + h * 0.3); g.lineTo(x + w * 0.34, y + h * 0.5);
+  g.lineTo(x + w * 0.52, y); g.lineTo(x + w * 0.7, y + h * 0.42);
+  g.lineTo(x + w * 0.84, y + h * 0.3); g.lineTo(x + w, y + h);
+  g.closePath(); g.fill(); g.stroke();
+}
+mt(-30, 260, 420, 220, '#3a3550');
+mt(560, 240, 440, 250, '#2e2a42');
+
+// 崖台
+g.fillStyle = '#3c3226'; g.strokeStyle = INK; g.lineWidth = 5;
+g.beginPath();
+g.moveTo(180, 600); g.lineTo(260, 430); g.lineTo(620, 430); g.lineTo(700, 600);
+g.closePath(); g.fill(); g.stroke();
+// 崖台亮面
+g.fillStyle = '#574a34';
+g.beginPath(); g.moveTo(260, 430); g.lineTo(620, 430); g.lineTo(648, 480); g.lineTo(232, 480); g.closePath(); g.fill();
+
+// 飘飞披风人物（跃起姿态）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const O = (w) => { g.strokeStyle = INK; g.lineWidth = w; g.stroke(); };
+  // 披风（后层，向右掀）
+  g.fillStyle = '#b03028';
+  g.beginPath();
+  g.moveTo(-6, -46);
+  g.quadraticCurveTo(-60, -50, -84, -20);
+  g.quadraticCurveTo(-60, -6, -30, -8);
+  g.quadraticCurveTo(-16, -20, -4, -30);
+  g.closePath(); g.fill(); O(4);
+  // 袍身
+  g.fillStyle = '#28527a';
+  g.beginPath();
+  g.moveTo(-16, -50);
+  g.quadraticCurveTo(-30, -14, -18, 2);
+  g.quadraticCurveTo(0, 12, 20, -2);
+  g.quadraticCurveTo(30, -18, 16, -50);
+  g.closePath(); g.fill(); O(4.5);
+  // 阴影档
+  g.fillStyle = '#1d3f60';
+  g.beginPath();
+  g.moveTo(2, -46); g.quadraticCurveTo(14, -20, 18, -4);
+  g.quadraticCurveTo(6, 6, -2, 2);
+  g.quadraticCurveTo(4, -24, -4, -46);
+  g.closePath(); g.fill();
+  // 头(侧脸微扬)
+  g.fillStyle = '#f0c8a0'; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath(); g.arc(4, -62, 12, 0, 7); g.fill(); g.stroke();
+  // 发(向后扬)
+  g.fillStyle = '#1a1410';
+  g.beginPath();
+  g.moveTo(-8, -72); g.quadraticCurveTo(-20, -78, -34, -70);
+  g.quadraticCurveTo(-24, -66, -14, -60); g.quadraticCurveTo(-10, -68, -8, -72);
+  g.closePath(); g.fill(); O(3.6);
+  // 眼神（一点白 + 眉）
+  g.fillStyle = '#fff'; g.beginPath(); g.ellipse(9, -63, 3, 2, -0.2, 0, 7); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 2.6;
+  g.beginPath(); g.moveTo(5, -68); g.lineTo(12, -70); g.stroke();
+  // 手臂持剑前指
+  g.fillStyle = '#f0c8a0'; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath(); g.ellipse(30, -36, 11, 6, -0.5, 0, 7); g.fill(); g.stroke();
+  // 剑（爆发斜上）
+  g.fillStyle = '#c8d8e8'; g.strokeStyle = INK; g.lineWidth = 4.4;
+  g.save(); g.translate(38, -42); g.rotate(-0.5);
+  g.beginPath(); g.roundRect(-14, -6, 96, 12, 5); g.fill(); g.stroke();
+  g.fillStyle = '#e8c060'; g.fillRect(-22, -8, 9, 16); g.strokeRect(-22, -8, 9, 16);
+  g.restore();
+  // 剑光弧
+  g.strokeStyle = 'rgba(255,240,200,.9)'; g.lineWidth = 7;
+  g.beginPath(); g.moveTo(30, -30); g.quadraticCurveTo(90, -70, 130, -76); g.stroke();
+  g.strokeStyle = '#fff'; g.lineWidth = 2.6;
+  g.beginPath(); g.moveTo(30, -30); g.quadraticCurveTo(90, -70, 130, -76); g.stroke();
+  g.restore();
+}
+person(430, 428, 1.8);
+
+// 道具（大色块+粗边）
+function pill(x, y) {
+  g.fillStyle = '#e05a3a'; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath(); g.arc(x, y, 17, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#f5b89a'; g.beginPath(); g.arc(x - 5, y - 5, 6, 0, 7); g.fill();
+}
+function sword(x, y) {
+  g.save(); g.translate(x, y); g.rotate(-0.25);
+  g.fillStyle = '#98b8d8'; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(-52, -7, 96, 14, 6); g.fill(); g.stroke();
+  g.fillStyle = '#e8c060'; g.fillRect(44, -15, 9, 30); g.strokeRect(44, -15, 9, 30);
+  g.restore();
+}
+function gourd(x, y) {
+  g.fillStyle = '#68a860'; g.strokeStyle = INK; g.lineWidth = 4;
+  g.beginPath(); g.arc(x, y + 12, 16, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.arc(x, y - 9, 10, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#4c7a46';
+  g.beginPath(); g.arc(x, y + 12, 8, 0, 7); g.fill();
+  g.fillStyle = '#c89050'; g.fillRect(x - 3, y - 21, 6, 8); g.strokeRect(x - 3, y - 21, 6, 8);
+}
+pill(140, 530); sword(230, 545); gourd(830, 535);
+</script>
+</body>
+</html>

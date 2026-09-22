@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张06 · 童趣黏土</title>
+<style>
+  body{margin:0;background:#efe3d8;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Yuanti SC","Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+  .tag{position:fixed;top:10px;left:16px;color:#7a5a4a;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#b09a88;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">06 · 童趣黏土</div>
+<div class="cap">软糯圆角 + 柔影 + 高光点 —— 休闲治愈向，心境系统绝佳搭配</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const SKY = '#fdf0e2', GRASS = '#a8d08d', GRASS2 = '#8ec273';
+
+// 天空
+const sky = g.createLinearGradient(0, 0, 0, 400);
+sky.addColorStop(0, '#cde9f5'); sky.addColorStop(1, SKY);
+g.fillStyle = sky; g.fillRect(0, 0, 960, 400);
+g.fillStyle = SKY; g.fillRect(0, 380, 960, 220);
+
+// 太阳(软光圈)
+g.fillStyle = 'rgba(255,214,130,.5)'; g.beginPath(); g.arc(150, 110, 62, 0, 7); g.fill();
+g.fillStyle = '#ffd280'; g.beginPath(); g.arc(150, 110, 40, 0, 7); g.fill();
+
+// 胖云
+function cloud(x, y, s) {
+  g.fillStyle = '#fff';
+  [[0,0,26],[24,-8,20],[-24,-6,18],[8,-18,17]].forEach(([ox,oy,r]) => {
+    g.beginPath(); g.arc(x + ox * s, y + oy * s, r * s, 0, 7); g.fill();
+  });
+}
+cloud(420, 100, 1); cloud(720, 150, 0.75); cloud(240, 180, 0.6);
+
+// 圆滚滚的山丘
+function hill(x, y, w, h, c) {
+  g.fillStyle = c;
+  g.beginPath(); g.ellipse(x, y, w, h, 0, Math.PI, 0); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.18)';
+  g.beginPath(); g.ellipse(x - w * 0.25, y - h * 0.45, w * 0.3, h * 0.22, -0.4, 0, 7); g.fill();
+}
+hill(200, 420, 320, 190, GRASS2);
+hill(760, 430, 340, 170, GRASS2);
+g.fillStyle = GRASS; g.fillRect(0, 400, 960, 200);
+g.fillStyle = 'rgba(0,0,0,.07)'; g.beginPath(); g.ellipse(480, 520, 400, 40, 0, 0, 7); g.fill();
+
+// 黏土小屋
+function house(x, y, s) {
+  g.fillStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.ellipse(x, y + 6 * s, 46 * s, 9 * s, 0, 0, 7); g.fill();
+  g.fillStyle = '#f3e3c8'; g.beginPath(); g.roundRect(x - 32 * s, y - 34 * s, 64 * s, 38 * s, 10 * s); g.fill();
+  g.fillStyle = '#e88f6a'; g.beginPath();
+  g.moveTo(x - 42 * s, y - 32 * s); g.quadraticCurveTo(x, y - 66 * s, x + 42 * s, y - 32 * s);
+  g.closePath(); g.fill();
+  g.fillStyle = '#c8d8e8'; g.beginPath(); g.roundRect(x - 20 * s, y - 26 * s, 18 * s, 14 * s, 4 * s); g.fill();
+  g.fillStyle = '#b07850'; g.beginPath(); g.roundRect(x + 4 * s, y - 18 * s, 13 * s, 22 * s, 5 * s); g.fill();
+}
+house(810, 470, 1);
+
+// 黏土松树
+function tree(x, y, s) {
+  g.fillStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.ellipse(x, y + 4 * s, 26 * s, 6 * s, 0, 0, 7); g.fill();
+  g.fillStyle = '#a8764f'; g.beginPath(); g.roundRect(x - 5 * s, y - 16 * s, 10 * s, 16 * s, 4 * s); g.fill();
+  const gc = '#7cbf6a';
+  g.fillStyle = gc; g.beginPath(); g.arc(x, y - 30 * s, 17 * s, 0, 7); g.fill();
+  g.beginPath(); g.arc(x - 13 * s, y - 22 * s, 12 * s, 0, 7); g.fill();
+  g.beginPath(); g.arc(x + 13 * s, y - 22 * s, 12 * s, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.arc(x - 5 * s, y - 35 * s, 5 * s, 0, 7); g.fill();
+}
+tree(120, 480, 1.2); tree(890, 460, 0.9);
+
+// 软糯修士
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.fillStyle = 'rgba(0,0,0,.1)'; g.beginPath(); g.ellipse(0, 4, 30, 7, 0, 0, 7); g.fill();
+  // 袍子(胖水滴)
+  g.fillStyle = '#7fa8d8';
+  g.beginPath();
+  g.moveTo(-13, -30);
+  g.quadraticCurveTo(-30, -2, -22, 2);
+  g.quadraticCurveTo(0, 10, 22, 2);
+  g.quadraticCurveTo(30, -2, 13, -30);
+  g.closePath(); g.fill();
+  // 大头
+  g.fillStyle = '#ffe3c8';
+  g.beginPath(); g.arc(0, -44, 17, 0, 7); g.fill();
+  // 头发帘 + 髻
+  g.fillStyle = '#5a4636';
+  g.beginPath(); g.arc(0, -50, 16, Math.PI, 0); g.fill();
+  g.beginPath(); g.arc(8, -62, 6.5, 0, 7); g.fill();
+  g.fillStyle = '#e8a86a'; g.beginPath(); g.arc(8, -70, 3, 0, 7); g.fill();
+  // 腮红 + 眯眯眼 + 小嘴
+  g.fillStyle = 'rgba(240,140,130,.5)';
+  g.beginPath(); g.arc(-9, -41, 4, 0, 7); g.fill();
+  g.beginPath(); g.arc(9, -41, 4, 0, 7); g.fill();
+  g.strokeStyle = '#4a3a2c'; g.lineWidth = 2; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(-8, -47); g.lineTo(-4, -47); g.stroke();
+  g.beginPath(); g.moveTo(4, -47); g.lineTo(8, -47); g.stroke();
+  g.beginPath(); g.arc(0, -40, 3, 0.2, Math.PI - 0.2); g.stroke();
+  // 腰带
+  g.fillStyle = '#e8788a'; g.beginPath(); g.roundRect(-20, -16, 40, 7, 3.5); g.fill();
+  // 拱手小袖
+  g.fillStyle = '#7fa8d8';
+  g.beginPath(); g.ellipse(0, -24, 12, 7, 0, 0, 7); g.fill();
+  g.fillStyle = '#ffe3c8'; g.beginPath(); g.arc(0, -22, 5, 0, 7); g.fill();
+  g.restore();
+}
+person(480, 490, 1.8);
+
+// 软糯道具
+function pill(x, y) {
+  g.fillStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.ellipse(x, y + 15, 18, 5, 0, 0, 7); g.fill();
+  g.fillStyle = '#f08a7a'; g.beginPath(); g.arc(x, y, 15, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.arc(x - 5, y - 6, 4.5, 0, 7); g.fill();
+}
+function sword(x, y) {
+  g.save(); g.translate(x, y); g.rotate(-0.3);
+  g.fillStyle = '#b8d0e8'; g.beginPath(); g.roundRect(-46, -7, 82, 14, 7); g.fill();
+  g.fillStyle = '#f3c86a'; g.beginPath(); g.roundRect(36, -13, 8, 26, 4); g.fill();
+  g.beginPath(); g.roundRect(-54, -6, 9, 12, 4); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(-40, -4, 60, 4);
+  g.restore();
+}
+function gourd(x, y) {
+  g.fillStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.ellipse(x, y + 22, 20, 5, 0, 0, 7); g.fill();
+  g.fillStyle = '#a8d89a'; g.beginPath(); g.arc(x, y + 8, 18, 0, 7); g.fill();
+  g.beginPath(); g.arc(x, y - 12, 11, 0, 7); g.fill();
+  g.fillStyle = '#c8a06a'; g.beginPath(); g.roundRect(x - 3, y - 26, 6, 8, 2.5); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.arc(x - 6, y + 2, 5, 0, 7); g.fill();
+}
+pill(240, 545); sword(330, 548); gourd(650, 542);
+</script>
+</body>
+</html>

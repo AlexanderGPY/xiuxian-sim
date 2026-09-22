@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张07 · 手绘涂鸦</title>
+<style>
+  body{margin:0;background:#fdfcf6;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Yuanti SC","Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.12)}
+  .tag{position:fixed;top:10px;left:16px;color:#444;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#a0a090;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">07 · 手绘涂鸦</div>
+<div class="cap">歪线重描 + 手写批注 —— 轻松幽默，教程感强</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const INK = '#2f2f2a';
+g.fillStyle = '#fdfcf6'; g.fillRect(0, 0, 960, 600);
+
+// 手绘线：多段轻抖动，重复2-3遍
+function wline(pts, w, alpha, passes) {
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let p = 0; p < (passes || 2); p++) {
+    g.strokeStyle = INK; g.lineWidth = w; g.globalAlpha = (alpha || 1) * (p ? 0.45 : 1);
+    g.beginPath();
+    pts.forEach((pt, i) => {
+      const jx = (Math.sin(i * 7.7 + p * 3) * 1.6), jy = (Math.cos(i * 5.3 + p * 2) * 1.6);
+      i ? g.lineTo(pt[0] + jx, pt[1] + jy) : g.moveTo(pt[0] + jx, pt[1] + jy);
+    });
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+function wcircle(x, y, r, w) {
+  const pts = [];
+  for (let a = 0; a <= 6.5; a += 0.45) pts.push([x + Math.cos(a) * r * (1 + 0.04 * Math.sin(a * 3)), y + Math.sin(a) * r]);
+  wline(pts, w || 3);
+}
+
+// 山（三笔大三角 + 涂阴影线）
+function doodleMt(x, y, w, h) {
+  wline([[x, y], [x + w * 0.5, y - h], [x + w, y], [x, y]], 3.4);
+  for (let i = 1; i < 5; i++) {
+    wline([[x + w * 0.5 - w * 0.08 * i, y - h * (1 - 0.16 * i)], [x + w * 0.5 + w * 0.1 * i, y - h * (1 - 0.14 * i)]], 1.6, .5, 1);
+  }
+}
+doodleMt(40, 380, 330, 210);
+doodleMt(250, 400, 300, 150);
+doodleMt(560, 390, 380, 230);
+// 太阳：圈 + 放射短线
+wcircle(830, 100, 36, 3);
+for (let a = 0; a < 8; a++) {
+  const A = a * Math.PI / 4;
+  wline([[830 + Math.cos(A) * 46, 100 + Math.sin(A) * 46], [830 + Math.cos(A) * 62, 100 + Math.sin(A) * 62]], 2.4, 1, 1);
+}
+g.font = '22px "Yuanti SC","Kaiti SC",serif'; g.fillStyle = INK;
+g.fillText('太阳!', 806, 170);
+
+// 涂鸦小人（打坐）
+function person(x, y) {
+  // 打坐盘腿底座
+  wline([[x - 44, y], [x + 44, y]], 3.6);
+  wline([[x - 44, y], [x - 30, y + 14], [x - 8, y + 14]], 3, 1, 1);
+  wline([[x + 44, y], [x + 30, y + 14], [x + 8, y + 14]], 3, 1, 1);
+  // 身体（拱形）
+  wline([[x - 30, y], [x - 34, y - 46], [x, y - 58], [x + 34, y - 46], [x + 30, y]], 3.4);
+  // 头 + 髻
+  wcircle(x, y - 74, 17, 3);
+  wcircle(x + 8, y - 96, 7, 2.6);
+  // 眯眼 + 微笑
+  wline([[x - 9, y - 76], [x - 3, y - 76]], 2.2, 1, 1);
+  wline([[x + 3, y - 76], [x + 9, y - 76]], 2.2, 1, 1);
+  wline([[x - 5, y - 68], [x, y - 66], [x + 5, y - 68]], 2.2, 1, 1);
+  // 双手合十
+  wline([[x - 10, y - 40], [x - 2, y - 30], [x + 8, y - 40]], 3);
+  // 头顶灵气圈圈
+  g.strokeStyle = INK; g.globalAlpha = .6;
+  for (let i = 0; i < 3; i++) { g.beginPath(); g.arc(x + 6 + i * 6, y - 116 - i * 12, 4 + i, 0, 5); g.stroke(); }
+  g.globalAlpha = 1;
+}
+person(480, 470);
+g.font = '20px "Yuanti SC","Kaiti SC",serif';
+g.fillText('吐纳中…', 540, 440);
+// 箭头批注
+wline([[545, 450], [585, 425], [578, 437]], 2.2, .8, 1);
+
+// 道具（歪歪扭扭）
+function pill(x, y) { wcircle(x, y, 16, 3); wline([[x - 7, y - 6], [x - 1, y - 10]], 2.4, 1, 1); g.fillStyle = '#f0a08a'; g.font = '16px serif'; g.fillText('丹', x + 26, y + 6); }
+function sword(x, y) { wline([[x, y], [x + 90, y - 30]], 4); wline([[x + 14, y + 8], [x + 24, y - 10]], 3.4); wline([[x - 4, y - 4], [x + 4, y + 10]], 3, 1, 1); g.fillText('剑', x + 44, y + 22); }
+function gourd(x, y) { wcircle(x, y + 12, 14, 3); wcircle(x, y - 10, 9, 2.6); wline([[x, y - 19], [x + 2, y - 30]], 2.6, 1, 1); g.fillText('葫芦', x - 10, y + 40); }
+pill(200, 520); sword(300, 540); gourd(760, 520);
+
+// 手写标题
+g.font = 'bold 30px "Yuanti SC","Kaiti SC",serif';
+g.strokeStyle = '#f0c060'; g.lineWidth = 10; g.globalAlpha = .5;
+g.strokeText('今天也要努力修仙', 60, 80);
+g.globalAlpha = 1; g.fillStyle = INK;
+g.fillText('今天也要努力修仙', 60, 80);

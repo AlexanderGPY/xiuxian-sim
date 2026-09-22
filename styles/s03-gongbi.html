@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张03 · 青绿工笔</title>
+<style>
+  body{margin:0;background:#e9e0c8;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+  .tag{position:fixed;top:10px;left:16px;color:#3d3a2c;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#8a8474;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">03 · 青绿工笔</div>
+<div class="cap">石青石绿矿色 + 金线勾勒 —— 宋画气质，精致名门感</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const GOLD = '#a8863c', SILK = '#f3ecd8';
+
+// 绢底 + 双线画框
+g.fillStyle = SILK; g.fillRect(0, 0, 960, 600);
+g.strokeStyle = GOLD; g.lineWidth = 2.5; g.strokeRect(16, 16, 928, 568);
+g.lineWidth = 1; g.strokeRect(24, 24, 912, 552);
+
+// 云纹（工笔圈云）
+function cloud(x, y, s) {
+  g.strokeStyle = '#9db8ab'; g.lineWidth = 1.6;
+  for (let k = 0; k < 3; k++) {
+    g.beginPath();
+    g.arc(x + k * 26 * s, y + (k % 2) * 7 * s, 13 * s, Math.PI * 0.9, Math.PI * 2.2);
+    g.stroke();
+  }
+}
+cloud(120, 120, 1.2); cloud(700, 90, 1); cloud(820, 200, 0.8);
+
+// 山：轮廓 + 分层填色 + 金边 + 内侧长皴线
+function mt(x, y, w, h, fills, gold) {
+  g.beginPath();
+  g.moveTo(x, y + h);
+  g.bezierCurveTo(x + w * 0.08, y + h * 0.45, x + w * 0.22, y + h * 0.28, x + w * 0.38, y + h * 0.1);
+  g.bezierCurveTo(x + w * 0.46, y + h * 0.02, x + w * 0.52, y + h * 0.03, x + w * 0.58, y + h * 0.12);
+  g.bezierCurveTo(x + w * 0.72, y + h * 0.3, x + w * 0.88, y + h * 0.5, x + w, y + h);
+  g.closePath();
+  const grad = g.createLinearGradient(x, y, x, y + h);
+  fills.forEach((c, i) => grad.addColorStop(i / (fills.length - 1), c));
+  g.fillStyle = grad; g.fill();
+  if (gold) { g.strokeStyle = GOLD; g.lineWidth = 1.8; g.stroke(); }
+  // 内皴
+  g.strokeStyle = 'rgba(30,60,50,.35)'; g.lineWidth = 1;
+  for (let i = 1; i <= 4; i++) {
+    g.beginPath();
+    g.moveTo(x + w * 0.18 * i, y + h * (0.5 + i * 0.06));
+    g.quadraticCurveTo(x + w * (0.18 * i + 0.05), y + h * 0.7, x + w * (0.18 * i + 0.12), y + h * 0.92);
+    g.stroke();
+  }
+}
+mt(60, 150, 340, 300, ['#7fb2a2', '#b7d6c5'], true);
+mt(300, 210, 400, 260, ['#4e8f83', '#8cc2ac'], true);
+mt(560, 150, 380, 320, ['#2f6f6d', '#6aa892'], true);
+mt(180, 330, 420, 170, ['#265e5c', '#4e8f83'], false);
+mt(520, 360, 440, 140, ['#1f5252', '#3f7f74'], false);
+
+// 水：细网纹
+g.fillStyle = '#cfe3d6'; g.fillRect(60, 470, 860, 100);
+g.strokeStyle = '#8fb8a4'; g.lineWidth = 1;
+for (let y = 480; y < 565; y += 9) for (let x = 70 + (y % 18); x < 900; x += 44) {
+  g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 10, y - 3, x + 20, y); g.stroke();
+}
+
+// 人物：工笔修士（细线 + 平色）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.lineWidth = 1.6; g.strokeStyle = '#3a3630';
+  // 发髻与头
+  g.fillStyle = '#1e1b17';
+  g.beginPath(); g.arc(0, -74, 7, 0, 7); g.fill(); g.beginPath(); g.arc(0, -64, 11, 0, 7); g.fill();
+  g.fillStyle = '#f2ddc2';
+  g.beginPath(); g.ellipse(0, -58, 9, 10.5, 0, 0, 7); g.fill(); g.stroke();
+  // 内袍(石绿) 外袍(石青)
+  g.fillStyle = '#8cc2ac';
+  g.beginPath();
+  g.moveTo(-9, -46); g.quadraticCurveTo(-24, -6, -18, 14);
+  g.quadraticCurveTo(0, 20, 18, 14); g.quadraticCurveTo(24, -6, 9, -46);
+  g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#2f6f6d';
+  g.beginPath();
+  g.moveTo(-14, -40); g.quadraticCurveTo(-30, 2, -22, 16);
+  g.quadraticCurveTo(-6, 22, 10, 16); g.quadraticCurveTo(26, 0, 14, -40);
+  g.closePath(); g.fill(); g.stroke();
+  // 交领与腰带（金）
+  g.strokeStyle = GOLD; g.lineWidth = 2.4;
+  g.beginPath(); g.moveTo(-8, -44); g.quadraticCurveTo(0, -34, 10, -42); g.stroke();
+  g.beginPath(); g.moveTo(-16, -14); g.lineTo(16, -14); g.stroke();
+  // 拱手
+  g.strokeStyle = '#3a3630'; g.lineWidth = 1.6;
+  g.fillStyle = '#f2ddc2';
+  g.beginPath(); g.ellipse(0, -24, 8, 5, 0, 0, 7); g.fill(); g.stroke();
+  g.restore();
+}
+person(700, 452, 1.6);
+
+// 道具（金线工笔）
+function pill(x, y) {
+  g.fillStyle = '#c4453a'; g.beginPath(); g.arc(x, y, 14, 0, 7); g.fill();
+  g.strokeStyle = GOLD; g.lineWidth = 2; g.stroke();
+  g.strokeStyle = '#f0d9c8'; g.beginPath(); g.arc(x - 3, y - 4, 6, 3.4, 5.6); g.stroke();
+}
+function sword(x, y) {
+  g.save(); g.translate(x, y); g.rotate(-0.32);
+  g.fillStyle = '#2f6f6d'; g.fillRect(-60, -5, 104, 10);
+  g.strokeStyle = GOLD; g.lineWidth = 2; g.strokeRect(-60, -5, 104, 10);
+  g.fillStyle = GOLD; g.fillRect(44, -12, 7, 24); g.fillRect(-66, -4, 8, 8);
+  g.restore();
+}
+function gourd(x, y) {
+  g.fillStyle = '#8cc2ac'; g.strokeStyle = GOLD; g.lineWidth = 2;
+  g.beginPath(); g.arc(x, y + 16, 16, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.arc(x, y - 7, 10, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#a8863c'; g.fillRect(x - 2.5, y - 21, 5, 6);
+  g.strokeStyle = '#c4453a'; g.beginPath(); g.moveTo(x + 12, y + 8); g.quadraticCurveTo(x + 24, y + 2, x + 18, y - 8); g.stroke();
+}
+pill(120, 520); sword(200, 520); gourd(310, 516);
+// 落款印
+g.fillStyle = '#b03a29'; g.font = '11px "Kaiti SC",serif';
+g.save(); g.translate(884, 540); g.rotate(0.02);
+g.fillRect(0, 0, 40, 40); g.fillStyle = SILK; g.textAlign = 'center';
+g.fillText('云', 20, 17); g.fillText('隐', 20, 32); g.restore();
+</script>
+</body>
+</html>

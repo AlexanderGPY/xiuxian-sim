@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张19 · 古籍羊皮卷</title>
+<style>
+  body{margin:0;background:#3a2e1e;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 10px 50px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#e8d9b0;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#9a8a6a;font-size:12px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">19 · 古籍羊皮卷</div>
+<div class="cap">羊皮底 + 褐墨手绘 + 图鉴注记 —— 藏经阁/百科界面天选</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const SEPIA = '#5b4632', FAINT = '#8a745a';
+
+// 羊皮底
+const pg = g.createRadialGradient(480, 300, 100, 480, 300, 640);
+pg.addColorStop(0, '#efe0bc'); pg.addColorStop(0.75, '#e4d1a4'); pg.addColorStop(1, '#c9ae7c');
+g.fillStyle = pg; g.fillRect(0, 0, 960, 600);
+
+// 陈年污渍
+function stain(x, y, r, a) {
+  const st = g.createRadialGradient(x, y, r * 0.2, x, y, r);
+  st.addColorStop(0, `rgba(120,90,50,${a})`); st.addColorStop(0.8, `rgba(120,90,50,${a * 0.5})`); st.addColorStop(1, 'rgba(120,90,50,0)');
+  g.fillStyle = st; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+}
+stain(130, 110, 80, 0.16); stain(860, 480, 90, 0.14); stain(700, 80, 60, 0.12); stain(220, 520, 70, 0.1);
+
+// 焦边
+const burn = g.createRadialGradient(480, 300, 360, 480, 300, 560);
+burn.addColorStop(0, 'rgba(90,60,30,0)'); burn.addColorStop(0.85, 'rgba(90,60,30,.25)'); burn.addColorStop(1, 'rgba(60,38,18,.55)');
+g.fillStyle = burn; g.fillRect(0, 0, 960, 600);
+
+// 手绘装饰边框（双线 + 角花）
+g.strokeStyle = SEPIA; g.lineWidth = 2.6; g.strokeRect(22, 22, 916, 556);
+g.lineWidth = 1; g.strokeRect(32, 32, 896, 536);
+[[22, 22, 1, 1], [938, 22, -1, 1], [22, 578, 1, -1], [938, 578, -1, -1]].forEach(([x, y, dx, dy]) => {
+  g.lineWidth = 2;
+  g.beginPath();
+  g.moveTo(x + dx * 40, y); g.quadraticCurveTo(x + dx * 8, y + dy * 8, x, y + dy * 40);
+  g.stroke();
+});
+
+// 手绘符山（^ 形层叠 + 排线阴影）
+function handMt(x, y, w, h, lw) {
+  g.strokeStyle = SEPIA; g.lineWidth = lw || 2.4; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(x, y);
+  g.quadraticCurveTo(x + w * 0.2, y - h * 0.85, x + w * 0.34, y - h * 0.72);
+  g.quadraticCurveTo(x + w * 0.45, y - h, x + w * 0.56, y - h * 0.62);
+  g.quadraticCurveTo(x + w * 0.75, y - h * 0.3, x + w, y);
+  g.stroke();
+  // 排线
+  g.lineWidth = 1; g.globalAlpha = 0.6;
+  for (let i = 1; i < 4; i++) {
+    g.beginPath();
+    g.moveTo(x + w * 0.3 + i * 10, y - h * (0.66 - i * 0.09));
+    g.lineTo(x + w * 0.3 + i * 10 + 16, y);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+handMt(60, 330, 300, 200);
+handMt(230, 340, 280, 140, 2);
+handMt(600, 320, 300, 210);
+
+// 虚线路径（藏宝图）
+g.setLineDash([7, 7]); g.strokeStyle = FAINT; g.lineWidth = 2;
+g.beginPath();
+g.moveTo(120, 470); g.quadraticCurveTo(260, 400, 400, 450);
+g.quadraticCurveTo(560, 500, 700, 420);
+g.stroke();
+g.setLineDash([]);
+// 路径终点 ✕
+g.strokeStyle = '#a03828'; g.lineWidth = 2.6;
+g.beginPath(); g.moveTo(688, 408); g.lineTo(712, 432); g.moveTo(712, 408); g.lineTo(688, 432); g.stroke();
+
+// 罗盘（右上）
+function compass(x, y, r) {
+  g.strokeStyle = SEPIA; g.lineWidth = 2;
+  g.beginPath(); g.arc(x, y, r, 0, 7); g.stroke();
+  g.beginPath(); g.arc(x, y, r * 0.7, 0, 7); g.stroke();
+  g.fillStyle = SEPIA; g.font = `14px "Kaiti SC",serif`; g.textAlign = 'center';
+  g.fillText('北', x, y - r - 6); g.fillText('南', x, y + r + 16);
+  g.fillText('东', x + r + 12, y + 4); g.fillText('西', x - r - 12, y + 4);
+  // 星形指针
+  g.fillStyle = '#a03828';
+  g.beginPath();
+  g.moveTo(x, y - r * 0.62); g.lineTo(x + 6, y); g.lineTo(x, y + r * 0.62); g.lineTo(x - 6, y);
+  g.closePath(); g.fill();
+}
+compass(830, 150, 46);
+
+// 人物：图鉴式修士（褐墨线绘 + 手写注）
+function person(x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.strokeStyle = SEPIA; g.lineWidth = 2.4; g.lineCap = 'round';
+  // 头与髻
+  g.beginPath(); g.arc(0, -66, 11, 0, 7); g.stroke();
+  g.beginPath(); g.arc(7, -80, 5, 0, 7); g.stroke();
+  // 身袍（长弧）
+  g.beginPath();
+  g.moveTo(-11, -54); g.quadraticCurveTo(-28, -10, -21, 2);
+  g.quadraticCurveTo(0, 12, 21, 2); g.quadraticCurveTo(28, -10, 11, -54);
+  g.stroke();
+  // 衣纹
+  g.lineWidth = 1.2; g.globalAlpha = .75;
+  g.beginPath(); g.moveTo(-8, -40); g.quadraticCurveTo(-14, -18, -10, 0); g.stroke();
+  g.beginPath(); g.moveTo(8, -38); g.quadraticCurveTo(13, -16, 9, 2); g.stroke();
+  g.beginPath(); g.moveTo(-4, -30); g.quadraticCurveTo(0, -10, -2, 6); g.stroke();
+  g.globalAlpha = 1; g.lineWidth = 2.4;
+  // 拱手
+  g.beginPath(); g.ellipse(0, -30, 11, 7, 0, 0, 7); g.stroke();
+  g.restore();
+}
+person(470, 430, 1.7);
+// 注记线
+g.strokeStyle = FAINT; g.lineWidth = 1.2;
+g.beginPath(); g.moveTo(512, 372); g.lineTo(580, 350); g.lineTo(660, 350); g.stroke();
+g.fillStyle = SEPIA; g.font = '15px "Kaiti SC",serif'; g.textAlign = 'left';
+g.fillText('外门弟子·束髻·执帚', 584, 344);
+
+// 道具图鉴（标本式 + 手写签）
+function spec(x, y, draw, label) {
+  g.strokeStyle = FAINT; g.lineWidth = 1.2; g.setLineDash([4, 4]);
+  g.strokeRect(x - 34, y - 34, 68, 68);
+  g.setLineDash([]);
+  g.strokeStyle = SEPIA; g.lineWidth = 2.2;
+  draw(x, y);
+  g.fillStyle = SEPIA; g.font = '14px "Kaiti SC",serif'; g.textAlign = 'center';
+  g.fillText(label, x, y + 54);
+}
+spec(140, 500, (x, y) => {
+  g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke();
+  g.beginPath(); g.arc(x - 4, y - 4, 5, 0, 7); g.stroke();
+}, '凝气丹·三品');
+spec(250, 505, (x, y) => {
+  g.beginPath(); g.moveTo(x - 26, y + 8); g.lineTo(x + 24, y - 8); g.stroke();
+  g.beginPath(); g.moveTo(x - 8, y + 12); g.lineTo(x + 6, y - 12); g.stroke();
+}, '青霜·二品');
+spec(760, 500, (x, y) => {
+  g.beginPath(); g.arc(x, y + 8, 13, 0, 7); g.stroke();
+  g.beginPath(); g.arc(x, y - 9, 8, 0, 7); g.stroke();
+  g.beginPath(); g.moveTo(x, y - 17); g.lineTo(x + 2, y - 24); g.stroke();
+}, '紫金葫芦·四品');
+
+// 标题与印
+g.fillStyle = '#3e2f1e'; g.font = 'bold 30px "Kaiti SC",serif'; g.textAlign = 'left';
+g.fillText('云隐山全图 · 卷一', 60, 88);
+g.fillStyle = '#a03828'; g.fillRect(860, 500, 40, 40);
+g.fillStyle = '#efe0bc'; g.font = '14px "Kaiti SC",serif'; g.textAlign = 'center';
+g.fillText('云', 880, 518); g.fillText('隐', 880, 534);
+</script>
+</body>
+</html>
