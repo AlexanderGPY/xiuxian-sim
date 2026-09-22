@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>云隐仙踪 · P1 荒山立足</title>
+<title>云隐仙踪 · P3 百艺俱全</title>
 <script>
   /* 最早的错误捕获：任何脚本异常都记入 window.__errs，供排查与 __G 读取 */
   window.__errs = [];
@@ -14,8 +14,8 @@
 </script>
 <style>
   :root{
-    --paper:#f4efe3; --jiao:#1f1d1a; --nong:#3a3733; --zhong:#5c5852;
-    --dan:#8f8a80; --qing:#c9c4b8; --zhu:#a33b2e; --hua:#3d5a80; --zhe:#8c6a4f;
+    --paper:#f2ebd8; --jiao:#2b2822; --nong:#4a443a; --zhong:#6a5f4c;
+    --dan:#9a8f78; --qing:#d8cdb0; --zhu:#a83a2a; --hua:#3d5a80; --zhe:#8c6a4f; --gold:#b8934e;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:var(--paper);
@@ -23,80 +23,99 @@
     -webkit-user-select:none;user-select:none}
   #stage{position:absolute;inset:0}
 
+  /* 宣纸毛边框：不规则圆角 + 外圈淡墨环（鬼谷笔触框） */
+  .panel{
+    background:rgba(242,235,216,.94);
+    border:1px solid rgba(106,95,76,.55);
+    border-radius:3px 9px 4px 10px / 9px 4px 10px 3px;
+    box-shadow:0 0 0 3px rgba(106,95,76,.13), 0 5px 18px rgba(60,50,34,.16);
+  }
+
   /* ---- 顶栏 ---- */
   #topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;
     padding:8px 14px;pointer-events:none;z-index:10}
   #topbar>*{pointer-events:auto}
-  .seal{width:38px;height:38px;line-height:38px;text-align:center;border:3px solid var(--zhu);
-    color:var(--zhu);border-radius:5px;font-size:18px;transform:rotate(-4deg);
-    background:rgba(244,239,227,.88)}
+  .seal{width:38px;height:38px;line-height:38px;text-align:center;
+    color:#f2e8d0;background:var(--zhu);border-radius:4px 9px 5px 10px / 9px 4px 10px 4px;
+    font-size:17px;transform:rotate(-4deg);letter-spacing:1px;
+    box-shadow:inset 0 0 0 2px rgba(242,232,208,.75), 0 3px 10px rgba(90,30,20,.35)}
   .title{font-size:20px;color:var(--jiao);letter-spacing:4px}
   .title small{font-size:11px;color:var(--dan);letter-spacing:2px;margin-left:8px}
   #res{display:flex;gap:6px;margin-left:6px}
-  .chip{font-size:13px;color:var(--zhong);background:rgba(244,239,227,.88);
-    border:1px solid rgba(92,88,82,.25);border-radius:3px;padding:2px 8px;letter-spacing:1px}
+  .chip{font-size:13px;color:var(--zhong);background:rgba(242,235,216,.9);
+    border:1px solid rgba(106,95,76,.45);border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;
+    padding:2px 9px;letter-spacing:1px;box-shadow:0 1px 4px rgba(60,50,34,.12)}
   .chip.bad{color:var(--zhu);border-color:var(--zhu)}
   #date{margin-left:auto;font-size:15px;color:var(--zhong);letter-spacing:2px;
-    background:rgba(244,239,227,.88);padding:3px 12px;border:1px solid rgba(92,88,82,.25);border-radius:3px}
+    background:rgba(242,235,216,.9);padding:3px 14px;border-radius:2px 7px 3px 8px / 7px 2px 8px 3px;
+    border:1px solid rgba(106,95,76,.45);box-shadow:0 1px 4px rgba(60,50,34,.12)}
   #speed{display:flex;gap:4px;margin-left:8px}
   #speed button,#filebtns button,#filebtns select{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);
-    background:rgba(244,239,227,.9);border:1px solid rgba(92,88,82,.35);border-radius:3px;cursor:pointer}
+    background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;cursor:pointer}
   #speed button{width:36px}
-  #speed button:hover,#filebtns button:hover{border-color:var(--nong)}
+  #speed button:hover,#filebtns button:hover{border-color:var(--nong);color:var(--jiao)}
   #speed button.on{background:var(--zhu);border-color:var(--zhu);color:var(--paper)}
   #filebtns{display:flex;gap:4px;margin-left:8px}
 
   /* ---- 左：建造 ---- */
   #left{position:absolute;left:0;top:56px;bottom:120px;width:212px;display:flex;flex-direction:column;
     padding:8px;z-index:9;pointer-events:none}
-  #bpanel{background:rgba(244,239,227,.92);border:1px solid rgba(92,88,82,.3);border-radius:6px;
-    padding:8px;display:flex;flex-direction:column;gap:6px;pointer-events:auto;
-    box-shadow:0 4px 20px rgba(31,29,26,.08);max-height:100%}
-  #bpanel h2{font-size:15px;letter-spacing:3px;color:var(--jiao)}
+  #bpanel{padding:10px;display:flex;flex-direction:column;gap:6px;pointer-events:auto;max-height:100%}
+  #bpanel h2{font-size:15px;letter-spacing:3px;color:var(--jiao);display:flex;align-items:center;gap:7px}
+  #bpanel h2::before{content:'';width:9px;height:9px;background:var(--zhu);
+    border-radius:1px 3px 2px 3px / 3px 1px 3px 2px;transform:rotate(4deg);
+    box-shadow:inset 0 0 0 1.5px rgba(242,232,208,.6)}
   #btabs{display:flex;flex-wrap:wrap;gap:4px}
-  #btabs button{font-family:inherit;font-size:12px;padding:2px 8px;border:1px solid rgba(92,88,82,.3);
-    border-radius:3px;background:transparent;color:var(--zhong);cursor:pointer}
-  #btabs button.on{background:var(--zhong);color:var(--paper)}
+  #btabs button{font-family:inherit;font-size:12px;padding:2px 9px;border:1px solid rgba(106,95,76,.35);
+    border-radius:2px 5px 3px 6px / 5px 2px 6px 3px;background:transparent;color:var(--zhong);cursor:pointer}
+  #btabs button:hover{border-color:var(--nong);color:var(--jiao)}
+  #btabs button.on{background:var(--zhong);color:var(--paper);border-color:var(--zhong)}
   #bgrid{overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:5px;padding-right:2px}
-  .bcard{font-family:inherit;text-align:left;background:rgba(255,255,255,.5);border:1px solid rgba(92,88,82,.28);
-    border-radius:4px;padding:5px 7px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .bcard{font-family:inherit;text-align:left;background:rgba(255,252,244,.55);border:1px solid rgba(106,95,76,.32);
+    border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:5px 7px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
   .bcard b{font-size:13.5px;color:var(--jiao);font-weight:normal}
   .bcard span{font-size:11px;color:var(--dan)}
-  .bcard:hover{border-color:var(--zhong)}
+  .bcard:hover{border-color:var(--zhong);background:rgba(255,252,244,.85)}
   .bcard.on{border-color:var(--zhu);box-shadow:0 0 0 1px var(--zhu)}
   .bcard.locked{opacity:.4;cursor:not-allowed}
   #bhint{font-size:11.5px;color:var(--dan);line-height:1.5}
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-thumb{background:rgba(106,95,76,.4);border-radius:4px}
+  ::-webkit-scrollbar-track{background:transparent}
 
   /* ---- 右：选中 ---- */
   #right{position:absolute;right:0;top:56px;width:220px;padding:8px;z-index:9}
-  #selinfo{background:rgba(244,239,227,.92);border:1px solid rgba(92,88,82,.3);border-radius:6px;
-    padding:10px;box-shadow:0 4px 20px rgba(31,29,26,.08)}
+  #selinfo{padding:11px}
   #selinfo .hint{font-size:12px;color:var(--dan);letter-spacing:1px}
   #selinfo h3{font-size:16px;color:var(--jiao);letter-spacing:1px;margin-bottom:4px}
   #selinfo h3 small{font-size:11px;color:var(--zhu);margin-left:6px}
   #selinfo .sub{font-size:12px;color:var(--zhong);margin:3px 0;letter-spacing:.5px}
   .bar{display:flex;align-items:center;gap:6px;margin:4px 0}
   .bar em{font-style:normal;font-size:11px;color:var(--dan);width:26px}
-  .bar i{flex:1;height:7px;background:rgba(92,88,82,.15);border-radius:3px;overflow:hidden}
-  .bar b{display:block;height:100%;background:var(--zhong);border-radius:3px}
-  .bar b.bad{background:var(--zhu)}
+  .bar i{flex:1;height:7px;background:rgba(106,95,76,.15);border-radius:3px;overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(60,50,34,.2)}
+  .bar b{display:block;height:100%;background:linear-gradient(90deg,#7a6f5a,#5a5142);border-radius:3px}
+  .bar b.bad{background:linear-gradient(90deg,#b85a48,#a83a2a)}
+  .bar b.full{background:linear-gradient(90deg,#c9a35c,#b8934e)}
   .bar u{text-decoration:none;font-size:10.5px;color:var(--dan);width:22px;text-align:right}
-  .act{margin-top:8px;font-family:inherit;font-size:12.5px;padding:4px 10px;
-    border:1px solid var(--zhu);color:var(--zhu);background:transparent;border-radius:3px;cursor:pointer}
+  .act{margin-top:8px;font-family:inherit;font-size:12.5px;padding:4px 11px;
+    border:1px solid var(--zhu);color:var(--zhu);background:transparent;
+    border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;cursor:pointer}
   .act:hover{background:var(--zhu);color:var(--paper)}
-  .act.small{margin-top:2px;margin-right:4px;font-size:11.5px;padding:2px 7px;border-color:rgba(163,59,46,.5)}
+  .act.small{margin-top:2px;margin-right:4px;font-size:11.5px;padding:2px 8px;border-color:rgba(168,58,42,.5)}
   .act.dim{opacity:.4}
-  .recipe{border-top:1px dashed rgba(92,88,82,.25);padding:6px 0 2px}
+  .recipe{border-top:1px dashed rgba(106,95,76,.3);padding:6px 0 2px}
   .recipe .rline{display:flex;justify-content:space-between;align-items:baseline}
   .recipe b{font-size:13.5px;color:var(--jiao);font-weight:normal}
   .recipe .rline span{font-size:11px;color:var(--dan)}
   .recipe .rdesc{font-size:11.5px;color:var(--zhong);margin:2px 0 3px}
   .qtag{display:inline-block;font-size:11.5px;color:var(--hua);border:1px solid rgba(61,90,128,.4);
-    border-radius:3px;padding:1px 6px;margin:2px 3px 0 0}
+    border-radius:2px 5px 3px 6px / 5px 2px 6px 3px;padding:1px 6px;margin:2px 3px 0 0}
   .qtag b{cursor:pointer;color:var(--zhu);font-weight:normal;margin-left:3px}
   .artrow{display:flex;flex-wrap:wrap;gap:2px;margin-top:4px}
   .seedhead{color:var(--hua);font-size:12px;margin-top:4px}
-  #qte-c{display:block;margin:10px auto;background:var(--paper);border:1px solid rgba(92,88,82,.3)}
+  #qte-c{display:block;margin:10px auto;background:var(--paper);border:1px solid rgba(106,95,76,.4);
+    border-radius:2px 6px 3px 7px / 6px 2px 7px 3px}
   .qte-tip{text-align:center;font-size:12.5px;color:var(--zhong);letter-spacing:1px;margin-bottom:8px}
   u.good{text-decoration:none;color:#3d7a52}
   u.bad{text-decoration:none;color:var(--zhu)}
@@ -104,33 +123,39 @@
   /* ---- 日志 ---- */
   #logbox{position:absolute;left:8px;bottom:44px;width:340px;max-height:190px;overflow:hidden;
     display:flex;flex-direction:column-reverse;z-index:8;pointer-events:none}
-  #log div{font-size:12px;color:var(--zhong);background:rgba(244,239,227,.82);margin-top:3px;
-    padding:2px 8px;border-radius:3px;letter-spacing:.5px}
+  #log div{font-size:12px;color:var(--zhong);background:rgba(242,235,216,.85);margin-top:3px;
+    padding:2px 9px;border-radius:1px 5px 2px 6px / 5px 1px 6px 2px;letter-spacing:.5px;
+    border-left:2px solid rgba(106,95,76,.4)}
   #log b{color:var(--dan);font-weight:normal;font-size:11px;margin-right:4px}
 
-  /* ---- 提示浮层 ---- */
+  /* ---- 提示浮层（纸条） ---- */
   #toasts{position:absolute;top:64px;left:50%;transform:translateX(-50%);z-index:20;
     display:flex;flex-direction:column;gap:6px;pointer-events:none}
-  .toast{background:rgba(31,29,26,.88);color:var(--paper);font-size:14px;letter-spacing:2px;
-    padding:8px 22px;border-radius:4px;border-left:3px solid var(--zhu);
+  .toast{background:rgba(247,241,226,.96);color:var(--jiao);font-size:14px;letter-spacing:2px;
+    padding:8px 24px;border-radius:1px 6px 2px 7px / 6px 1px 7px 2px;
+    border:1px solid rgba(106,95,76,.5);border-left:3px solid var(--zhu);
+    box-shadow:0 4px 14px rgba(60,50,34,.25);transform:rotate(-.4deg);
     transition:opacity .6s;animation:drop .3s}
-  @keyframes drop{from{transform:translateY(-8px);opacity:0}}
+  @keyframes drop{from{transform:translateY(-8px) rotate(-.4deg);opacity:0}}
 
   /* ---- 风水视图按钮 ---- */
   #btn-feng{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
-    background:rgba(244,239,227,.9);border:1px solid rgba(92,88,82,.35);border-radius:3px;padding:0 10px;margin-left:6px}
+    background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
+    border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:6px}
   #btn-feng.on{background:var(--hua);border-color:var(--hua);color:var(--paper)}
 
   /* ---- 择典弹窗 ---- */
-  #modal{position:absolute;inset:0;background:rgba(31,29,26,.45);z-index:30;
+  #modal{position:absolute;inset:0;background:rgba(43,40,34,.5);z-index:30;
     display:flex;align-items:center;justify-content:center}
-  .mbox{background:var(--paper);border:2px solid var(--zhong);border-radius:8px;padding:18px 20px;
-    width:560px;max-height:82vh;overflow-y:auto;box-shadow:0 16px 60px rgba(0,0,0,.4)}
+  .mbox{background:var(--paper);border:1px solid rgba(106,95,76,.6);
+    border-radius:4px 12px 5px 13px / 12px 4px 13px 5px;padding:20px 22px;
+    width:560px;max-height:82vh;overflow-y:auto;
+    box-shadow:0 0 0 4px rgba(106,95,76,.15), 0 18px 60px rgba(0,0,0,.4)}
   .mbox h3{font-size:18px;color:var(--jiao);letter-spacing:2px;margin-bottom:4px}
   .mbox h3 small{font-size:12px;color:var(--dan);margin-left:8px;letter-spacing:1px}
   .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
-  .scard{font-family:inherit;text-align:left;background:rgba(255,255,255,.55);border:1px solid rgba(92,88,82,.3);
-    border-radius:5px;padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+  .scard{font-family:inherit;text-align:left;background:rgba(255,252,244,.6);border:1px solid rgba(106,95,76,.35);
+    border-radius:3px 8px 4px 9px / 8px 3px 9px 4px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:4px}
   .scard:hover{border-color:var(--zhu);box-shadow:0 0 0 1px var(--zhu)}
   .scard b{font-size:15px;color:var(--jiao);font-weight:normal}
   .scard span{font-size:11.5px;color:var(--zhong)}
@@ -141,7 +166,7 @@
   /* ---- 底栏 ---- */
   #bottombar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;
     padding:7px 14px;font-size:12.5px;color:var(--dan);letter-spacing:1px;
-    background:linear-gradient(transparent,rgba(244,239,227,.92) 45%);pointer-events:none;z-index:10}
+    background:linear-gradient(transparent,rgba(242,235,216,.94) 45%);pointer-events:none;z-index:10}
   #bottombar .dot{color:var(--qing)}
   #stats{margin-left:auto;color:var(--dan)}
 </style>
@@ -151,7 +176,7 @@
 
 <div id="topbar">
   <div class="seal">云隐</div>
-  <div class="title">云隐仙踪<small>P1 · 荒山立足</small></div>
+  <div class="title">云隐仙踪<small>P3 · 百艺俱全</small></div>
   <div id="res"></div>
   <div id="date">—</div>
   <div id="speed">
@@ -170,7 +195,7 @@
 </div>
 
 <div id="left">
-  <div id="bpanel">
+  <div id="bpanel" class="panel">
     <h2>营 造</h2>
     <div id="btabs"></div>
     <div id="bgrid"></div>
@@ -179,7 +204,7 @@
 </div>
 
 <div id="right">
-  <div id="selinfo"><div class="hint">点选弟子 / 建筑 / 地块</div></div>
+  <div id="selinfo" class="panel"><div class="hint">点选弟子 / 建筑 / 地块</div></div>
 </div>
 
 <div id="logbox"><div id="log"></div></div>
@@ -271,7 +296,7 @@
 
   X.Tick.start();
   if (window.__errs && __errs.length) X.log('启动期错误:', __errs);
-  X.log('P1 荒山立足就绪', { version: X.VERSION });
+  X.log('P3 百艺俱全就绪', { version: X.VERSION });
 })(XIANG);
 </script>
 </body>

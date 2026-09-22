@@ -28,33 +28,51 @@
     c.width = M.W * T; c.height = M.H * T;
     const g = c.getContext('2d');
 
-    // 远山两层（画外意境装饰）
+    // 远山三层（淡墨渐隐，凡人式层叠）
     const rr = X.Rng((M.seed ^ 0x9e37) >>> 0);
-    for (const [base, amp, col, al] of [[34, 22, X.Ink.qing, 0.5], [66, 26, X.Ink.dan, 0.35]]) {
+    const K = X.Ink;
+    [[26, 20, 0.16], [52, 26, 0.11], [84, 30, 0.07]].forEach(([base, amp, al]) => {
+      const gr = g.createLinearGradient(0, base - amp - 14, 0, base + amp + 26);
+      gr.addColorStop(0, X.Ink.a(K.zhong, al + 0.06));
+      gr.addColorStop(1, X.Ink.a(K.zhong, 0));
+      g.fillStyle = gr;
       g.beginPath();
-      g.moveTo(0, 0);
+      g.moveTo(0, base + amp + 26);
       let y = base + rr.f(-amp * 0.4, amp * 0.4);
-      for (let x = 0; x <= c.width; x += 10) {
-        y += rr.f(-5, 5);
+      for (let x = 0; x <= c.width; x += 12) {
+        y += rr.f(-6, 6);
         y = Math.max(base - amp, Math.min(base + amp, y));
         g.lineTo(x, y);
       }
-      g.lineTo(c.width, 0);
-      g.closePath();
-      g.fillStyle = X.Ink.a(col, al);
-      g.fill();
-    }
+      g.lineTo(c.width, base + amp + 26);
+      g.closePath(); g.fill();
+    });
     // 山脊上点缀侧锋
     for (let i = 0; i < 26; i++) {
-      blit(g, X.Brush.get('ce', rr.chance(0.5) ? 0 : 1, i), rr.f(0, c.width), rr.f(30, 80), rr.f(-0.5, 0.5), 0.5);
+      blit(g, X.Brush.get('ce', rr.chance(0.5) ? 0 : 1, i), rr.f(0, c.width), rr.f(20, 70), rr.f(-0.5, 0.5), 0.4);
     }
 
-    // 逐格落墨
+    // 逐格落墨：先淡彩晕染，后笔触
     const TR = M.TERRAIN;
+    const WASH = {
+      [TR.WATER]: [K.hua, 0.26],
+      [TR.SOIL]: [K.zhe, 0.28],
+      [TR.GRASS]: [K.cao, 0.34],
+      [TR.FOREST]: [K.caoD, 0.38],
+      [TR.ROCK]: [K.yan, 0.34],
+    };
     for (let y = 0; y < M.H; y++) for (let x = 0; x < M.W; x++) {
       const i = y * M.W + x, t = M.terrain[i];
       const rng = X.Rng(hash(x, y, M.seed));
       const cx = x * T + T / 2, cy = y * T + T / 2;
+      // 淡彩底晕（4×4 大块哈希抖动，整片连绵如晕染）
+      const wc = WASH[t];
+      if (wc) {
+        const jit = ((hash(x >> 2, y >> 2, M.seed ^ 0x51ed) % 100) / 100 - 0.5);
+        const smooth = 0.5 + Math.sin(x * 0.5 + y * 0.3) * 0.18;   // 缓变调制，去方格感
+        g.fillStyle = X.Ink.a(wc[0], Math.max(0.05, wc[1] + jit * wc[1] * 0.6 * smooth));
+        g.fillRect(x * T, y * T, T + 0.5, T + 0.5);
+      }
       if (t === TR.WATER) {
         // 留白 + 断续波纹；邻岸画岸线
         if (rng.chance(0.28)) blit(g, X.Brush.get('zhong', 0, rng.i(0, 99)), cx, cy, rng.f(-0.06, 0.06), 0.35);
@@ -74,12 +92,15 @@
           blit(g, X.Brush.get('ce', 0, rng.i(0, 99)), cx + rng.f(-5, 5), cy + rng.f(-4, 4), rng.f(-0.5, 0.5), 0.5);
         }
       } else if (t === TR.FOREST) {
-        blit(g, X.Brush.get('zhong', 0, rng.i(0, 99)), cx + rng.f(-2, 2), cy + 4, Math.PI / 2 + rng.f(-0.2, 0.2), 0.9);  // 干
+        blit(g, X.Brush.get('zhong', 0, rng.i(0, 99)), cx + rng.f(-2, 2), cy + 4, Math.PI / 2 + rng.f(-0.2, 0.2), 0.55);  // 干
         const lush = M.qi[i] >= 4 ? 1 : 0;
         for (let k = 0; k < 2 + lush; k++) {
           blit(g, X.Brush.get('dian', k === 0 ? 1 : 0, rng.i(0, 99)),
-            cx + rng.f(-3, 3), cy - 2 + rng.f(-3, 3), 0, k === 0 ? 0.85 : 0.6);
+            cx + rng.f(-3, 3), cy - 2 + rng.f(-3, 3), 0, k === 0 ? 0.7 : 0.5);
         }
+        // 林冠淡彩罩染：墨点染成深绿
+        g.fillStyle = X.Ink.a(K.caoD, 0.2 + lush * 0.08);
+        g.beginPath(); g.ellipse(cx + rng.f(-1, 1), cy - 1, T * 0.62, T * 0.56, rng.f(-0.3, 0.3), 0, 7); g.fill();
       } else if (t === TR.ROCK) {
         blit(g, X.Brush.get('ce', 1, rng.i(0, 99)), cx, cy, rng.f(-0.6, 0.6), 0.7);
         for (let k = 0; k < 2; k++) {

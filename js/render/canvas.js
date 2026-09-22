@@ -117,11 +117,17 @@
     world = canvas;
     if (pattern) return;
     pattern = g ? g.createPattern(X.Paper.tile, 'repeat') : null;
-    // 初始视角：世界居中，视口宽度约 72 格
-    const fitZ = Math.max(0.45, Math.min(2.6, cssW / (world.width * 0.9)));
-    C.cam.z = fitZ;
-    C.cam.x = world.width / 2 - cssW / 2 / fitZ;
-    C.cam.y = world.height / 2 - cssH / 2 / fitZ;
+    // 初始视角：世界居中，视口宽度约 72 格；布局未稳时（刷新后样式晚到）延迟校正
+    const fit = () => {
+      resize();
+      const fitZ = Math.max(0.45, Math.min(2.6, cssW / (world.width * 0.9)));
+      C.cam.z = fitZ;
+      C.cam.x = world.width / 2 - cssW / 2 / fitZ;
+      C.cam.y = world.height / 2 - cssH / 2 / fitZ;
+    };
+    fit();
+    requestAnimationFrame(fit);
+    setTimeout(fit, 300);
   };
 
   C.stats = () => ({ fps, zoom: +C.cam.z.toFixed(2), cam: { x: Math.round(C.cam.x), y: Math.round(C.cam.y) } });
