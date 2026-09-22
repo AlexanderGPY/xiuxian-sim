@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张21 · 凡人电影感</title>
+<style>
+  body{margin:0;background:#0d1116;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#cfd6da;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#7d8890;font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">21 · 凡人电影感（对标《凡人修仙传》动画）</div>
+<div class="cap">石柱峰 + 大气透视 + 山腰云海 + 丁达尔光 + 低饱和青灰 + 半写实背影修士 —— 电影质感方向</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const W = 960, H = 600;
+const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(20260922);
+
+/* ---------- 1. 天空：冷青灰 → 微暖地平线 ---------- */
+let sky = g.createLinearGradient(0, 0, 0, H * 0.8);
+sky.addColorStop(0, '#1f2b36');
+sky.addColorStop(0.5, '#3c4a55');
+sky.addColorStop(0.84, '#5e665f');
+sky.addColorStop(1, '#7e7862');
+g.fillStyle = sky; g.fillRect(0, 0, W, H);
+
+/* ---------- 2. 太阳 + 光晕 ---------- */
+const SUN = { x: 716, y: 152 };
+let halo = g.createRadialGradient(SUN.x, SUN.y, 0, SUN.x, SUN.y, 250);
+halo.addColorStop(0, 'rgba(250,238,206,0.85)');
+halo.addColorStop(0.1, 'rgba(238,222,182,0.45)');
+halo.addColorStop(0.38, 'rgba(194,188,158,0.15)');
+halo.addColorStop(1, 'rgba(194,188,158,0)');
+g.fillStyle = halo;
+g.beginPath(); g.arc(SUN.x, SUN.y, 250, 0, 7); g.fill();
+g.fillStyle = 'rgba(255,248,228,0.92)';
+g.beginPath(); g.arc(SUN.x, SUN.y, 20, 0, 7); g.fill();
+
+/* ---------- 3. 丁达尔光扇 ---------- */
+function ray(ang, len, w, a) {
+  g.save();
+  g.translate(SUN.x, SUN.y); g.rotate(ang);
+  let gr = g.createLinearGradient(0, 0, 0, len);
+  gr.addColorStop(0, `rgba(248,234,198,${a})`);
+  gr.addColorStop(0.7, `rgba(248,234,198,${a * 0.35})`);
+  gr.addColorStop(1, 'rgba(248,234,198,0)');
+  g.fillStyle = gr;
+  g.beginPath();
+  g.moveTo(-w * 0.16, 0); g.lineTo(w * 0.16, 0);
+  g.lineTo(w * 1.5, len); g.lineTo(-w * 0.9, len);
+  g.closePath(); g.fill();
+  g.restore();
+}
+ray(1.92, 540, 55, 0.15);
+ray(2.15, 580, 85, 0.10);
+ray(1.7, 460, 40, 0.12);
+ray(2.4, 540, 105, 0.06);
+
+/* ---------- 4. 石柱峰（主峰压轴、群峰错落遮挡） ---------- */
+function pillar(cx, baseY, w, h, cTop, cBot, lean, rimA) {
+  const grad = g.createLinearGradient(cx - w * 0.5, baseY - h, cx + w * 0.7, baseY);
+  grad.addColorStop(0, cTop);
+  grad.addColorStop(0.55, cBot);
+  grad.addColorStop(1, cBot);
+  g.fillStyle = grad;
+  g.beginPath();
+  g.moveTo(cx - w, baseY);
+  g.bezierCurveTo(cx - w * 0.9 + lean * 0.2, baseY - h * 0.42, cx - w * 1.04 + lean * 0.5, baseY - h * 0.64, cx - w * 0.52 + lean, baseY - h * 0.92);
+  g.quadraticCurveTo(cx - w * 0.26 + lean, baseY - h * 1.07, cx + w * 0.18 + lean * 0.6, baseY - h * 1.0);
+  g.quadraticCurveTo(cx + w * 0.62 + lean * 0.2, baseY - h * 0.9, cx + w * 0.6 + lean * 0.1, baseY - h * 0.76);
+  g.bezierCurveTo(cx + w * 1.04 - lean * 0.3, baseY - h * 0.44, cx + w * 0.9, baseY - h * 0.16, cx + w, baseY);
+  g.closePath(); g.fill();
+  // 右上受光缘
+  if (rimA > 0) {
+    g.strokeStyle = `rgba(222,216,192,${rimA})`; g.lineWidth = 1.8; g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(cx + w * 0.18 + lean * 0.6, baseY - h * 0.99);
+    g.quadraticCurveTo(cx + w * 0.62 + lean * 0.2, baseY - h * 0.88, cx + w * 0.58 + lean * 0.12, baseY - h * 0.68);
+    g.stroke();
+  }
+  // 竖向岩理
+  g.strokeStyle = cBot; g.globalAlpha = 0.5; g.lineWidth = 1.1;
+  for (let i = 0; i < 8; i++) {
+    const ox = (rnd() - 0.5) * w * 1.2;
+    const y0 = baseY - h * (0.18 + rnd() * 0.5);
+    g.beginPath(); g.moveTo(cx + ox, y0);
+    g.quadraticCurveTo(cx + ox * 0.7, y0 - h * 0.14, cx + ox * 0.45, y0 - h * 0.26);
+    g.stroke();
+  }
+  g.globalAlpha = 1;
+}
+// 植被：贴山体内侧的深青绿
+function capVege(cx, baseY, h, w, lean) {
+  for (let i = 0; i < 10; i++) {
+    const t = rnd();
+    const px = cx + lean * 0.7 + (t - 0.45) * w * 0.95;
+    const py = baseY - h * (0.97 - Math.abs(t - 0.42) * 0.22) + rnd() * h * 0.04;
+    g.fillStyle = `rgba(${34 + rnd() * 12 | 0},${50 + rnd() * 14 | 0},${42 + rnd() * 10 | 0},${0.5 + rnd() * 0.35})`;
+    g.beginPath(); g.ellipse(px, py, 5 + rnd() * 8, 2.6 + rnd() * 4, (rnd() - 0.5) * 0.7, 0, 7); g.fill();
+  }
+}
+// 谷地雾（竖向渐变，垫在山脚）
+function valleyFog(x0, x1, y0, y1, a) {
+  const fg = g.createLinearGradient(0, y0, 0, y1);
+  fg.addColorStop(0, 'rgba(168,178,172,0)');
+  fg.addColorStop(1, `rgba(168,178,172,${a})`);
+  g.fillStyle = fg;
+  g.fillRect(x0, y0, x1 - x0, y1 - y0);
+}
+
+/* 第一层：远景淡峰（左右各一，最冷最淡） */
+pillar(112, 440, 56, 260, '#6e8090', '#7f8d94', 18, 0.25);
+pillar(878, 445, 50, 230, '#728393', '#828f96', -12, 0.25);
+pillar(680, 448, 40, 170, '#7b8b99', '#889499', 6, 0.2);
+valleyFog(0, W, 380, 448, 0.5);
+
+/* 薄雾带（远山脚） */
+function mistBand(y, h, a, x0, x1, lumps) {
+  const cg = g.createLinearGradient(0, y - h, 0, y + h);
+  cg.addColorStop(0, 'rgba(186,194,188,0)');
+  cg.addColorStop(0.5, `rgba(186,194,188,${a})`);
+  cg.addColorStop(1, 'rgba(186,194,188,0)');
+  g.fillStyle = cg;
+  g.fillRect(x0, y - h, x1 - x0, h * 2);
+  g.fillStyle = `rgba(194,200,194,${a * 0.55})`;
+  for (let i = 0; i < lumps; i++) {
+    const cx = x0 + rnd() * (x1 - x0);
+    g.beginPath(); g.ellipse(cx, y + (rnd() - 0.5) * h * 0.5, 130 + rnd() * 200, h * (0.28 + rnd() * 0.22), 0, 0, 7); g.fill();
+  }
+}
+mistBand(426, 20, 0.38, 0, 560, 4);
+
+/* 第二层：主峰群（一座巨主峰 + 错落次峰，互相遮挡） */
+// 次峰（左，被主峰遮一半）
+pillar(196, 530, 64, 430, '#42535e', '#54646c', -18, 0.3);
+capVege(196, 530, 430, 64, -18);
+// 巨主峰（中偏左，顶出画面上缘）
+pillar(432, 545, 108, 620, '#394956', '#4c5c66', 12, 0.4);
+capVege(432, 545, 620, 108, 12);
+// 主峰肩上的小前峰（遮挡主峰根部）
+pillar(556, 548, 56, 300, '#455660', '#57666e', -14, 0.3);
+// 右侧远次峰
+pillar(806, 540, 66, 350, '#47575f', '#586870', 14, 0.3);
+capVege(806, 540, 350, 66, 14);
+
+/* 主峰腰云海：左段 + 中段厚、右段薄断开 */
+mistBand(492, 34, 0.6, 0, 640, 7);
+mistBand(514, 24, 0.45, 620, 960, 3);
+
+/* 第三层：近岸山影（暗，从底部伸入） */
+(function nearShore() {
+  const grad = g.createLinearGradient(0, 500, 0, 600);
+  grad.addColorStop(0, '#262f37');
+  grad.addColorStop(1, '#171e24');
+  g.fillStyle = grad;
+  g.beginPath();
+  g.moveTo(-10, 600); g.lineTo(-10, 545);
+  g.quadraticCurveTo(120, 512, 300, 528);
+  g.quadraticCurveTo(430, 540, 560, 560);
+  g.quadraticCurveTo(700, 578, 970, 588);
+  g.lineTo(970, 600);
+  g.closePath(); g.fill();
+})();
+
+/* ---------- 5. 水面（右侧露出，倒影波光） ---------- */
+const WY = 566;
+(function water() {
+  let wat = g.createLinearGradient(0, WY - 4, 0, H);
+  wat.addColorStop(0, '#4d5c64');
+  wat.addColorStop(1, '#2e3a42');
+  g.fillStyle = wat;
+  g.beginPath();
+  g.moveTo(430, 600); g.lineTo(452, 566);
+  g.quadraticCurveTo(700, 576, 970, 586);
+  g.lineTo(970, 600);
+  g.closePath(); g.fill();
+  // 波光
+  for (let i = 0; i < 26; i++) {
+    const t = rnd();
+    const y = WY + 4 + t * (H - WY - 6);
+    const x = 470 + rnd() * (960 - 470);
+    g.strokeStyle = `rgba(196,206,204,${0.05 + t * 0.12})`;
+    g.lineWidth = 0.8 + t * 1.4;
+    const len = 10 + rnd() * (16 + t * 70);
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + len, y); g.stroke();
+  }
+  // 日光路
+  for (let i = 0; i < 7; i++) {
+    const y = WY + 4 + i * 4.6;
+    const a = 0.16 * (1 - i / 8);
+    g.strokeStyle = `rgba(242,228,194,${a})`;
+    g.lineWidth = 1.8;
+    const jitter = (rnd() - 0.5) * 26;
+    g.beginPath(); g.moveTo(SUN.x - 12 + jitter, y); g.lineTo(SUN.x + 12 + jitter, y); g.stroke();
+  }
+})();
+
+/* ---------- 6. 道具：丹 / 剑 / 葫芦（摆在近岸石上） ---------- */
+// 剑
+(function sword() {
+  g.save();
+  g.translate(436, 576); g.rotate(-0.38);
+  const bg = g.createLinearGradient(0, -3, 0, 3);
+  bg.addColorStop(0, '#c8d0d4'); bg.addColorStop(0.5, '#87939a'); bg.addColorStop(1, '#4c5860');
+  g.fillStyle = bg;
+  g.beginPath();
+  g.moveTo(0, 0); g.lineTo(74, -2.3); g.lineTo(80, 0); g.lineTo(74, 2.3); g.lineTo(0, 0);
+  g.closePath(); g.fill();
+  g.fillStyle = '#202c34'; g.fillRect(-4, -4.4, 7, 8.8);
+  g.fillStyle = '#141c22'; g.fillRect(-20, -2.1, 16, 4.2);
+  g.fillStyle = '#a07e4a'; g.beginPath(); g.arc(-22, 0, 2.7, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(230,240,242,0.75)'; g.lineWidth = 0.9;
+  g.beginPath(); g.moveTo(6, -1.2); g.lineTo(72, -1.6); g.stroke();
+  g.restore();
+})();
+// 葫芦
+(function gourd() {
+  g.save(); g.translate(206, 566);
+  g.fillStyle = '#73492e';
+  g.beginPath(); g.ellipse(0, 8, 10, 9, 0, 0, 7); g.fill();
+  g.beginPath(); g.arc(0, -6, 6, 0, 7); g.fill();
+  g.fillStyle = 'rgba(244,214,156,0.4)';
+  g.beginPath(); g.ellipse(-3.2, 5, 2.8, 5, -0.4, 0, 7); g.fill();
+  g.strokeStyle = '#3a2a1b'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(0, -12); g.quadraticCurveTo(3, -18, 1, -21); g.stroke();
+  g.strokeStyle = '#923626'; g.lineWidth = 1.7;
+  g.beginPath(); g.moveTo(-5.5, -1); g.quadraticCurveTo(-11, 5, -8, 12); g.stroke();
+  g.restore();
+})();
+// 丹
+(function pill() {
+  g.save(); g.translate(262, 558);
+  g.fillStyle = '#849c90';
+  g.beginPath();
+  g.moveTo(-5.5, 0); g.quadraticCurveTo(-8.5, 11, -4.5, 17); g.lineTo(4.5, 17);
+  g.quadraticCurveTo(8.5, 11, 5.5, 0); g.closePath(); g.fill();
+  g.fillStyle = '#647b70'; g.fillRect(-3.6, -4.6, 7.2, 4.6);
+  g.restore();
+  let pg = g.createRadialGradient(281, 574, 0, 281, 574, 13);
+  pg.addColorStop(0, 'rgba(250,182,114,0.85)');
+  pg.addColorStop(0.35, 'rgba(228,126,68,0.45)');
+  pg.addColorStop(1, 'rgba(228,126,68,0)');
+  g.fillStyle = pg;
+  g.beginPath(); g.arc(281, 574, 13, 0, 7); g.fill();
+  g.fillStyle = '#d67e4c';
+  g.beginPath(); g.arc(281, 574, 3.2, 0, 7); g.fill();
+})();
+
+/* ---------- 7. 人物：背影修士（立于近岸，负剑望主峰） ---------- */
+(function () {
+  const x = 322, y = 566, s = 1.3;
+  g.save(); g.translate(x, y); g.scale(s, s);
+  const ROBE = '#98a6aa', ROBE_DD = '#4c5c64';
+  // 接地投影
+  g.fillStyle = 'rgba(6,10,14,0.5)';
+  g.beginPath(); g.ellipse(0, 2.5, 33, 6, 0, 0, 7); g.fill();
+
+  // 负剑（竖贴背后，柄露左肩上）
+  g.save(); g.rotate(0.16);
+  g.strokeStyle = '#192127'; g.lineWidth = 3.3;
+  g.beginPath(); g.moveTo(-10, -76); g.lineTo(-10, -104); g.stroke();
+  g.strokeStyle = '#a87e4c'; g.lineWidth = 2.1;
+  g.beginPath(); g.moveTo(-15, -106); g.lineTo(-5, -106); g.stroke();
+  g.restore();
+
+  // 下摆
+  g.fillStyle = ROBE;
+  g.beginPath();
+  g.moveTo(-13, -62);
+  g.quadraticCurveTo(-17, -20, -21, -2);
+  g.quadraticCurveTo(-8, 5, 2, 4);
+  g.quadraticCurveTo(14, 3, 19, -3);
+  g.quadraticCurveTo(15, -26, 12, -62);
+  g.closePath(); g.fill();
+  // 衣褶
+  g.strokeStyle = ROBE_DD; g.globalAlpha = 0.5; g.lineWidth = 1.2;
+  g.beginPath(); g.moveTo(-4, -58); g.quadraticCurveTo(-7, -30, -6, -4); g.stroke();
+  g.beginPath(); g.moveTo(6, -56); g.quadraticCurveTo(8, -28, 9, -5); g.stroke();
+  g.globalAlpha = 1;
+  // 左暗部
+  g.fillStyle = 'rgba(56,72,80,0.5)';
+  g.beginPath();
+  g.moveTo(-13, -62);
+  g.quadraticCurveTo(-17, -20, -21, -2);
+  g.quadraticCurveTo(-13, 2, -7, -2);
+  g.quadraticCurveTo(-10, -30, -9, -60);
+  g.closePath(); g.fill();
+
+  // 上身
+  g.fillStyle = ROBE;
+  g.beginPath();
+  g.moveTo(-13, -62);
+  g.quadraticCurveTo(-15, -74, -10, -78);
+  g.lineTo(10, -78);
+  g.quadraticCurveTo(15, -74, 12, -62);
+  g.closePath(); g.fill();
+
+  // 背手广袖
+  g.fillStyle = ROBE;
+  g.beginPath();
+  g.moveTo(-12, -74);
+  g.quadraticCurveTo(-27, -65, -20, -45);
+  g.quadraticCurveTo(-12, -51, -9, -60);
+  g.closePath(); g.fill();
+  g.beginPath();
+  g.moveTo(12, -74);
+  g.quadraticCurveTo(27, -65, 20, -45);
+  g.quadraticCurveTo(12, -51, 9, -60);
+  g.closePath(); g.fill();
+
+  // 腰带 + 垂绦
+  g.fillStyle = '#2c3a43';
+  g.fillRect(-13, -64, 26, 6);
+  g.fillStyle = '#25313a';
+  g.beginPath();
+  g.moveTo(-2, -58); g.lineTo(3, -58); g.lineTo(5, -30); g.lineTo(-1, -30);
+  g.closePath(); g.fill();
+
+  // 领后
+  g.fillStyle = '#22303a';
+  g.beginPath();
+  g.moveTo(-7, -78); g.lineTo(7, -78); g.lineTo(5, -84); g.lineTo(-5, -84);
+  g.closePath(); g.fill();
+
+  // 头
+  g.fillStyle = '#1e1b18';
+  g.beginPath(); g.ellipse(0, -90, 8.2, 8.8, 0, 0, 7); g.fill();
+  // 道冠
+  g.fillStyle = '#31403a';
+  g.beginPath(); g.ellipse(0, -100, 4.6, 3.4, 0, 0, 7); g.fill();
+  g.fillStyle = '#a87e4c'; g.fillRect(-4.6, -101.4, 9.2, 1.3);
+
+  // 右缘轮廓光
+  g.strokeStyle = 'rgba(240,228,196,0.88)'; g.lineWidth = 1.9; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(5, -95);
+  g.quadraticCurveTo(9.5, -88, 9, -78);
+  g.quadraticCurveTo(14.5, -70, 19.5, -47);
+  g.stroke();
+  g.strokeStyle = 'rgba(240,228,196,0.55)';
+  g.beginPath();
+  g.moveTo(12.5, -62);
+  g.quadraticCurveTo(14.5, -30, 18.5, -4);
+  g.stroke();
+  g.strokeStyle = 'rgba(240,228,196,0.6)'; g.lineWidth = 1.4;
+  g.beginPath(); g.arc(0, -90, 8.4, -1.2, 0.5); g.stroke();
+  g.restore();
+})();
+
+/* ---------- 8. 前景松（右缘，针叶放射） ---------- */
+(function pine() {
+  g.strokeStyle = '#0f1519';
+  g.lineWidth = 11; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(956, 600);
+  g.quadraticCurveTo(898, 512, 914, 442);
+  g.quadraticCurveTo(926, 390, 894, 344);
+  g.stroke();
+  g.lineWidth = 5;
+  g.beginPath(); g.moveTo(912, 462); g.quadraticCurveTo(860, 440, 834, 396); g.stroke();
+  g.beginPath(); g.moveTo(917, 410); g.quadraticCurveTo(952, 390, 960, 360); g.stroke();
+  // 针叶团：放射细线
+  function needles(cx, cy, r, n) {
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * Math.PI * 2;
+      const r1 = r * (0.25 + rnd() * 0.35), r2 = r * (0.75 + rnd() * 0.5);
+      const x1 = cx + Math.cos(a) * r1, y1 = cy + Math.sin(a) * r1 * 0.75;
+      const x2 = cx + Math.cos(a) * r2, y2 = cy + Math.sin(a) * r2 * 0.75;
+      g.strokeStyle = `rgba(${18 + rnd() * 14 | 0},${40 + rnd() * 18 | 0},${30 + rnd() * 12 | 0},${0.5 + rnd() * 0.4})`;
+      g.lineWidth = 1.1 + rnd() * 0.9;
+      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+    }
+    // 枝芯
+    g.fillStyle = 'rgba(14,26,22,0.75)';
+    g.beginPath(); g.ellipse(cx, cy, r * 0.3, r * 0.2, 0, 0, 7); g.fill();
+  }
+  needles(890, 340, 40, 60);
+  needles(830, 392, 33, 46);
+  needles(902, 438, 28, 40);
+  needles(952, 356, 30, 42);
+  // 枝干受光
+  g.strokeStyle = 'rgba(196,190,168,0.2)'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(952, 590); g.quadraticCurveTo(902, 510, 912, 446); g.stroke();
+})();
+
+/* ---------- 9. 远景飞鸟 ---------- */
+g.strokeStyle = 'rgba(36,46,54,0.85)'; g.lineWidth = 1.5; g.lineCap = 'round';
+[[276, 100], [308, 88], [340, 108], [304, 116]].forEach(([bx, by], i) => {
+  const f = 4.5 + i * 0.8;
+  g.beginPath();
+  g.moveTo(bx - f, by); g.quadraticCurveTo(bx - f * 0.4, by - f * 0.7, bx, by);
+  g.quadraticCurveTo(bx + f * 0.4, by - f * 0.7, bx + f, by);
+  g.stroke();
+});
+
+/* ---------- 10. 全局调色：冷罩色 + 暗角 ---------- */
+g.fillStyle = 'rgba(34,50,60,0.1)'; g.fillRect(0, 0, W, H);
+let vg = g.createRadialGradient(W / 2, H * 0.44, H * 0.4, W / 2, H * 0.5, H * 0.95);
+vg.addColorStop(0, 'rgba(8,13,18,0)');
+vg.addColorStop(1, 'rgba(8,13,18,0.5)');
+g.fillStyle = vg; g.fillRect(0, 0, W, H);
+</script>
+</body>
+</html>

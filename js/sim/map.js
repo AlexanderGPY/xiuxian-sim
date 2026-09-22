@@ -11,6 +11,13 @@
     W, H, N, TERRAIN, ELEM,
     terrain: new Uint8Array(N), elem: new Uint8Array(N * 5), qi: new Uint8Array(N),
     veins: [], seed: 0,
+    mut: {},   // 采集造成的地形改写 {tileIndex: 新地形}，存档携带
+  };
+  M.setTile = function (x, y, t) {
+    const i = y * W + x;
+    M.terrain[i] = t;
+    M.mut[i] = t;
+    X.Bus.emit('map:change', { x, y, t });
   };
 
   function noiseField(rng, cell) {
@@ -74,6 +81,8 @@
         if (v > M.qi[i]) M.qi[i] = v;
       }
     }
+    // 采集造成的地形改写（读档后重建）
+    for (const i in M.mut) M.terrain[i] = M.mut[i];
     return M;
   };
 

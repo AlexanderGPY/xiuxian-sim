@@ -10,6 +10,7 @@
   function resize() {
     dpr = window.devicePixelRatio || 1;
     cssW = cv.clientWidth; cssH = cv.clientHeight;
+    C.cssW = cssW; C.cssH = cssH;
     cv.width = Math.round(cssW * dpr);
     cv.height = Math.round(cssH * dpr);
   }
@@ -38,6 +39,8 @@
     g.imageSmoothingEnabled = true;
     g.imageSmoothingQuality = 'high';
     g.drawImage(world, r.x, r.y, r.w, r.h);
+    // 动态层（建筑/弟子/夜色）
+    if (X.Dyn) X.Dyn.draw(g, r, z);
 
     // 边缘留白：世界图四边向纸色渐隐（计白当黑，边缘处纸色最浓）
     const F = Math.min(90, r.w, r.h) * 0.5;
@@ -123,5 +126,12 @@
 
   C.stats = () => ({ fps, zoom: +C.cam.z.toFixed(2), cam: { x: Math.round(C.cam.x), y: Math.round(C.cam.y) } });
   Object.defineProperty(C, 'canvas', { get: () => cv });
+  // 屏幕坐标 → 世界格
+  C.pick = (clientX, clientY) => {
+    const b = cv.getBoundingClientRect();
+    const mx = clientX - b.left, my = clientY - b.top;
+    const wx = C.cam.x + mx / C.cam.z, wy = C.cam.y + my / C.cam.z;
+    return { mx, my, wx, wy, tx: Math.floor(wx / C.TILE), ty: Math.floor(wy / C.TILE) };
+  };
   X.Canvas = C;
 })(globalThis.XIANG);
