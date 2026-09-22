@@ -59,16 +59,32 @@
     if (sel.kind === 'disc') {
       const d = X.Disciple.list.find(o => o.id === sel.id);
       if (!d) { X.Dyn.sel = null; return; }
-      const tr = d.traits.map(t => X.Disciple && TRAIT_NAME(t)).join(' ');
+      const tr = d.traits.map(t => TRAIT_NAME(t)).join(' ');
       const S = d.stats;
-      box.innerHTML = `<h3>${d.name} <small>${d.kind}</small></h3>
-        <div class="sub">${tr}</div>
-        <div class="sub">膂${S.li} 骨${S.gu} 识${S.shen} 悟${S.wu} 魅${S.mei}</div>
-        <div class="sub">状态：${d.state}${d.bed ? ' · 有床' : ' · 无床'}${d.carry ? ` · 携${X.Items[d.carry.item].name}×${d.carry.n}` : ''}</div>
+      const R = X.Realms, Cu = X.Cult;
+      const expNeed = R.cost(d.realm, d.stage);
+      const expPct = isFinite(expNeed) ? d.exp / expNeed * 100 : 100;
+      const sc = Cu.scriptureOf(d);
+      const spells = Cu.spellsOn(d).map(s => s.n).join('、') || '—';
+      const feng = X.Feng.gradeFor(d);
+      const foundBtn = d.eligible && d.kind === '杂役' && !d.scId
+        ? `<button class="act" id="btn-found">择典筑基…</button>` : '';
+      const foundInfo = d.eligible && d.kind === '杂役' && d.scId
+        ? `<div class="sub">已择《${sc.name}》——待冲关</div>` : '';
+      box.innerHTML = `<h3>${d.name} <small>${d.kind}·${R.realmName(d)}${R.stageName(d)}</small></h3>
+        <div class="sub">${tr} · 灵根${X.Map.ELEM[d.linggen]}</div>
+        <div class="sub">膂${S.li} 骨${S.gu} 识${S.shen} 悟${S.wu} 魅${S.mei} 气感${S.qi}</div>
+        <div class="sub">状态：${d.state} · ${d.bed ? '有床' : '无床'} · 风水【${feng.grade}】 · 寿${Cu.age(d)}/${Cu.lifespan(d)}</div>
+        ${d.realm >= 1 ? bar('修为', expPct, expPct >= 99.5 ? 'full' : '') : ''}
+        ${sc ? `<div class="sub">道典：《${sc.name}》${X.Map.ELEM[sc.el] || '无'}属·${10 - sc.tier}品</div>
+        <div class="sub">神通：${spells}</div>` : ''}
+        ${foundInfo}${foundBtn}
         ${bar('心境', d.mood, d.mood < 30 ? 'bad' : '')}
         ${bar('气血', d.hp / X.Disciple.maxHp(d) * 100)}
         ${bar('饥饿', d.needs.hunger)}${bar('睡眠', d.needs.sleep)}
         ${bar('舒适', d.needs.comfort)}${bar('美观', d.needs.beauty)}${bar('社交', d.needs.social)}`;
+      const fb = el('btn-found');
+      if (fb) fb.onclick = () => openScriptureModal(d);
     } else if (sel.kind === 'build') {
       const b = X.Build.inst[sel.id];
       if (!b) { X.Dyn.sel = null; return; }
@@ -89,8 +105,43 @@
     }
   }
   function TRAIT_NAME(k) {
-    const M = { diligent: '勤快', lazy: '怠惰', sleepy: '贪睡', ironbelly: '耐饥', foodie: '馋嘴', greenhand: '木灵', stonekin: '石肤', chatty: '话痨', quiet: '喜静', tough: '皮糙' };
+    const M = { diligent: '勤快', lazy: '怠惰', sleepy: '贪睡', ironbelly: '耐饥', foodie: '馋嘴', greenhand: '木灵', stonekin: '石肤', chatty: '话痨', quiet: '喜静', tough: '皮糙', daochi: '道痴', leyi: '乐逸' };
     return M[k] || k;
+  }
+
+  // ---- 择典筑基弹窗 ----
+  function openScriptureModal(d) {
+    closeModal();
+    const wrap = document.createElement('div');
+    wrap.id = 'modal';
+    wrap.innerHTML = `<div class="mbox"><h3>${d.name} 择典筑基 <small>道典终身不换（除夺舍）</small></h3>
+      <div class="mgrid">${X.Scriptures.starter.map(s => `
+        <button class="scard" data-id="${s.id}">
+          <b>《${s.name}》</b>
+          <span>${s.el < 0 ? '无属' : X.Map.ELEM[s.el] + '属'}·${10 - s.tier}品 · 与其灵根：
+            ${X.Feng.relation(d.linggen, s.el) === '生' ? '<u class="good">相生+25%</u>' : X.Feng.relation(d.linggen, s.el) === '克' ? '<u class="bad">相克−25%</u>' : X.Feng.relation(d.linggen, s.el) === '同' ? '<u class="good">同源+10%</u>' : '平常'}
+          </span>
+          <span>${s.spells.map(p => p.n).join(' → ')}</span>
+        </button>`).join('')}</div>
+      <button class="act" id="modal-close">再想想</button></div>`;
+    document.body.appendChild(wrap);
+    el('modal-close').onclick = closeModal;
+    wrap.querySelectorAll('.scard').forEach(b => {
+      b.onclick = () => {
+        X.Cult.foundDisciple(d, b.dataset.id);
+        X.Game.log(`${d.name} 择定《${X.Scriptures.byId[b.dataset.id].name}》，即日冲关筑基`);
+        closeModal();
+        toast(`${d.name} 已择典，将赴静室冲关`);
+      };
+    });
+  }
+  function closeModal() { const m = el('modal'); if (m) m.remove(); }
+
+  // ---- 观星台：风水视图开关 ----
+  function refreshObsButton() {
+    const btn = el('btn-feng');
+    const has = X.Build.builtOf('observatory').length > 0;
+    btn.style.display = has ? '' : 'none';
   }
 
   // ---- 日志 / 提示 ----
@@ -195,7 +246,11 @@
       H._mapT = setTimeout(() => X.Scene.render(), 150);   // 伐木/采石后重绘地形
     });
     refreshRes(); refreshSel();
-    setInterval(() => { refreshRes(); refreshSel(); }, 450);
+    el('btn-feng').onclick = () => {
+      X.Dyn.fengView = !X.Dyn.fengView;
+      el('btn-feng').classList.toggle('on', X.Dyn.fengView);
+    };
+    setInterval(() => { refreshRes(); refreshSel(); refreshObsButton(); }, 450);
     el('bhint').textContent = '选择建筑后在地图上放置';
   };
 

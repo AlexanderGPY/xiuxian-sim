@@ -1,7 +1,7 @@
-/* 存档 v2：时间 + 地图种子与地形改写 + 全局经营状态。
-   v1（仅时间/种子）自动迁移为"同图新开局"。 */
+/* 存档 v3：时间 + 地图(种子/地形改写) + 经营 + 修行（境界/道典/寿元）。
+   v1/v2 旧档自动迁移（缺失字段走默认值）。 */
 (function (X) {
-  const VER = 2;
+  const VER = 3;
   const KEY = s => `xiang_save_${s}`;
   X.Save = {
     VER,
@@ -18,7 +18,6 @@
       X.Time.restore(o.time);
       X.Map.mut = (o.map && o.map.mut) || {};
       X.Map.generate(o.map ? o.map.seed : undefined);
-      X.Map.mut = {};
       if (o.ver >= 2 && o.game) X.Game.restore(o.game);
       else X.Game.init();   // v1 → 同图新开局
     },

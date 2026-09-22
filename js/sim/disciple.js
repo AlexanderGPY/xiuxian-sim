@@ -1,6 +1,6 @@
-/* 弟子（P1：杂役）：六维/灵根/特质 + 五需求 + 心境 + 状态机。
-   状态机：idle → (任务/进食/睡眠) go → do → 完成/归仓。
-   生存优先：饿>困>活。 */
+/* 弟子：六维/灵根/特质 + 五需求 + 心境 + 境界修行状态机。
+   杂役：干活 + 闲时吐纳，练气圆满可择典筑基。
+   修士：不干活，打坐纳气、破境冲关、吃饭睡觉。 */
 (function (X) {
   const SUR = '墨云顾沈白叶楚陆秦苏';
   const GIV = ['拙言', '守一', '青芜', '望舒', '知秋', '抱朴', '无咎', '拾遗', '云深', '听松', '见山', '归晚', '拂霜', '枕流', '停云', '鹤鸣'];
@@ -10,21 +10,19 @@
     foodie: { n: '馋嘴', mealBias: 1.5 }, greenhand: { n: '木灵', gatherWood: 1.4 },
     stonekin: { n: '石肤', gatherStone: 1.4 }, chatty: { n: '话痨', social: 1.4 },
     quiet: { n: '喜静', social: 0.7 }, tough: { n: '皮糙', hp: 1.3 },
+    daochi: { n: '道痴', cult: 1.15 }, leyi: { n: '乐逸', mood: 1.2 },
   };
   const D = { list: [], nextId: 1, SPEED: 0.09 };
 
   D.gen = function (x, y) {
     const r = X.rng;
-    const pick2 = arr => [r.pick(arr), r.pick(arr)];
     const traits = r.shuffle(Object.keys(TRAITS)).slice(0, 2);
+    const age = r.i(18, 30);
     const d = {
       id: D.nextId++, kind: '杂役',
       name: r.pick(SUR.split('')) + r.pick(GIV),
-      stats: {   // 六维（气感 P2 才用）
-        li: r.i(35, 90), gu: r.i(35, 90), shen: r.i(35, 90),
-        wu: r.i(35, 90), mei: r.i(35, 90), qi: r.i(35, 90),
-      },
-      linggen: r.i(0, 4),     // 主灵根（P2 用）
+      stats: { li: r.i(35, 90), gu: r.i(35, 90), shen: r.i(35, 90), wu: r.i(35, 90), mei: r.i(35, 90), qi: r.i(35, 90) },
+      linggen: r.i(0, 4),
       traits,
       skills: { farm: 0, cook: 0, build: 0, gather: 0 },
       px: x + 0.5, py: y + 0.5, x, y,
@@ -32,8 +30,11 @@
       mood: 70, moodEv: 0, hp: 100,
       task: null, bed: 0, carry: null,
       state: '闲',
+      // P2 修行
+      realm: 0, stage: 0, exp: 0, scId: '',
+      eligible: false, readyDay: 0, breakCd: 0, failPity: 0, cultSpot: 0,
+      bornDay: X.Time.day - age * 360,
     };
-    for (const t of traits) if (t === 'tough') d.hp = 130;
     return d;
   };
 
@@ -48,12 +49,12 @@
 
   D.hasTrait = (d, k) => d.traits.indexOf(k) >= 0;
   D.workSpeed = d => (1 + d.skills.build * 0.07 + d.stats.li / 400) * (D.hasTrait(d, 'diligent') ? 1.15 : D.hasTrait(d, 'lazy') ? 0.85 : 1);
-  D.maxHp = d => D.hasTrait(d, 'tough') ? 130 : 100;
+  D.maxHp = d => X.Cult ? X.Cult.maxHp(d) : (D.hasTrait(d, 'tough') ? 130 : 100);
 
   // ---- 行走 ----
   function walkStep(d) {
     const p = d.task && d.task.path;
-    if (!p || !p.length) return true;   // 已到
+    if (!p || !p.length) return true;
     const [tx, ty] = p[0];
     const cx = tx + 0.5, cy = ty + 0.5;
     const dx = cx - d.px, dy = cy - d.py;
@@ -89,8 +90,7 @@
   }
   function finishEat(d) {
     const it = X.Items[d.task.item === 'grain2' ? 'grain' : d.task.item];
-    const mult = d.task.item === 'meal'
-      ? (D.hasTrait(d, 'foodie') ? 1.1 : 1) : 1;
+    const mult = d.task.item === 'meal' ? (D.hasTrait(d, 'foodie') ? 1.1 : 1) : 1;
     d.needs.hunger = Math.min(100, d.needs.hunger + (it.food || 30) * (d.task.item === 'grain2' ? 1.9 : 1) * mult);
     if (d.task.item === 'meal') { d.moodEv += 3 + (d.skills.cook >= 5 ? 2 : 0); X.Game.stats.mealsEaten++; }
     else d.moodEv += (it.rawMood || 0) + (D.hasTrait(d, 'foodie') ? -3 : 0);
@@ -105,6 +105,34 @@
     d.state = '安眠';
   }
   const isNight = () => { const s = X.Time.shichen; return s >= 11 || s <= 2; };
+
+  // ---- 修行任务 ----
+  function startCultivate(d) {
+    const spot = X.Cult.spotFor(d);
+    if (!spot) {
+      if (!d._noSpotLog) { X.Game.log(`${d.name} 无处打坐（需蒲团或寒玉席）`); d._noSpotLog = true; }
+      d.state = '出关';
+      return false;
+    }
+    d._noSpotLog = false;
+    d.cultSpot = spot.id;
+    d.task = { type: 'cultivate', phase: 'go' };
+    d.task.tx = spot.x; d.task.ty = spot.y;
+    setPath(d, spot.x, spot.y);
+    d.state = '赴静室';
+    return true;
+  }
+  function startBreak(d) {
+    if (!d.cultSpot || !X.Build.inst[d.cultSpot]) {
+      if (!startCultivate(d)) return false;
+    }
+    const spot = X.Build.inst[d.cultSpot];
+    d.task = { type: 'break', phase: 'go', timer: 300 };
+    d.task.tx = spot.x; d.task.ty = spot.y;
+    setPath(d, spot.x, spot.y);
+    d.state = '赴冲关';
+    return true;
+  }
 
   // ---- 任务执行 ----
   function completeTask(d) {
@@ -152,20 +180,18 @@
         if (b && !b.built) {
           X.Build.work(b, 26 * D.workSpeed(d));
           d.skills.build += 0.15;
-          if (!b.built) { t.timer = 20; return; }   // 继续施工
+          if (!b.built) { t.timer = 20; return; }
         }
         d.task = null; d.state = '闲';
         break;
       }
-      case 'sulk': {
+      case 'cook': {
+        X.Inv.add('meal', 2);
+        d.skills.cook += 0.5; G.stats.mealsCooked += 2;
         d.task = null; d.state = '闲';
         break;
       }
-      case 'cook': {
-        const q = Math.min(5, 1 + Math.floor(d.skills.cook / 3 + d.stats.shen / 60));
-        const n = 2;
-        X.Inv.add('meal', n);
-        d.skills.cook += 0.5; G.stats.mealsCooked += n;
+      case 'sulk': {
         d.task = null; d.state = '闲';
         break;
       }
@@ -174,7 +200,7 @@
   function beginStore(d) {
     const st = X.Inv.nearestStore(d.x, d.y);
     d.state = '归仓';
-    if (!st) {   // 没有仓储：就地丢弃入总账（P1 容错）
+    if (!st) {
       if (d.carry) { X.Inv.add(d.carry.item, d.carry.n); d.carry = null; }
       d.task = null; d.state = '闲';
       return;
@@ -186,7 +212,6 @@
   // ---- 每 tick 更新 ----
   D.update = function (d) {
     const N = d.needs;
-    // 需求衰减（冬藏：冬日行缓食欲减）
     const winter = X.Time.season === 3 ? 0.7 : 1;
     N.hunger -= 0.030 * winter * (D.hasTrait(d, 'ironbelly') ? 0.8 : 1);
     if (d.task && d.task.type === 'sleep') N.sleep += 0.052;
@@ -196,40 +221,48 @@
     N.social = Math.max(0, N.social - 0.008);
     for (const k in N) N[k] = Math.max(0, Math.min(100, N[k]));
 
+    // 杂役闲时吐纳
+    if (d.kind === '杂役' && X.Cult) X.Cult.gain(d, X.Cult.passiveGain(d));
+
     // 生存优先级（饿极可唤醒睡者）
     if (!d.task || (d.task.type !== 'sleep' && d.task.type !== 'eat')) {
       if (N.hunger < 30) { startEat(d); }
       else if (N.sleep < 32 && isNight()) { startSleep(d); }
     } else if (d.task.type === 'sleep' && N.hunger < 15) {
-      startEat(d);   // 睡梦中饿醒
+      startEat(d);
     }
 
-    // 环境与社交（每 30 tick）
     if (X.Tick.count % 30 === 0) environment(d);
-    // 心境（每时辰）
     if (X.Tick.count % X.Time.TICKS_PER_SHICHEN === 0) mood(d);
-    // 生命
     if (N.hunger <= 0.5) d.hp -= 0.02;
     else if (N.hunger > 60 && d.hp < D.maxHp(d)) d.hp += 0.004;
     if (d.hp <= 0) { X.Game.kill(d, '饿殒'); return; }
 
     // 状态机
     const t = d.task;
-    if (!t) { d.state = '闲'; return; }
+    if (!t) {
+      if (d.kind === '修士') {
+        // 冲关优先（练气圆满已择典 / 大境圆满），否则打坐
+        if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) startBreak(d);
+        else startCultivate(d);
+      } else if (d.eligible && d.scId) {
+        startBreak(d);   // 择典已毕的杂役：冲关筑基
+      } else d.state = '闲';
+      return;
+    }
     if (t.phase === 'go') {
       if (walkStep(d)) {
-        if (t.type === 'eat' || t.type === 'sleep' || t.type === 'store') t.phase = 'do';
-        else { t.phase = 'do'; t.timer = t.timer || workTicks(d, t); }
+        t.phase = 'do';
+        t.timer = t.timer || workTicks(d, t);
       }
       return;
     }
-    // do
     switch (t.type) {
       case 'sleep': {
         d.state = '安眠';
         if (N.sleep >= 96 || (!isNight() && N.sleep > 60)) {
           d.task = null; d.state = '闲';
-          if (!t.bed) d.moodEv -= 2;   // 睡地上
+          if (!t.bed) d.moodEv -= 2;
         }
         break;
       }
@@ -247,19 +280,34 @@
         d.task = null; d.state = '闲';
         break;
       }
+      case 'cultivate': {
+        d.state = '打坐';
+        X.Cult.gain(d, X.Cult.rate(d));
+        if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) d.task = null;   // 转冲关
+        break;
+      }
+      case 'break': {
+        d.state = '冲关';
+        if (--t.timer <= 0) {
+          const r = X.Cult.attempt(d);
+          d.task = null;
+          if (!r.ok && r.why === '未择典') d.state = '待择典';
+        }
+        break;
+      }
       default: {
         d.state = stateName(t.type);
         if (--t.timer <= 0) {
           completeTask(d);
           if (d.task === null && t.job) X.Work.done(t.job);
-          else if (d.task !== null && d.task.type !== t.type && t.job) X.Work.done(t.job);   // 转入归仓等后续
+          else if (d.task !== null && d.task.type !== t.type && t.job) X.Work.done(t.job);
         }
       }
     }
   };
 
   function workTicks(d, t) {
-    const base = { chop: 60, mine: 80, sow: 34, harvest: 56, cook: 110 }[t.type] || 60;
+    const base = { chop: 60, mine: 80, sow: 34, harvest: 56, cook: 110, cultivate: 0, break: 300 }[t.type] || 60;
     let s = D.workSpeed(d);
     if ((t.type === 'chop' || t.type === 'mine') && d.skills.gather > 3) s *= 1.15;
     return Math.max(12, base / s);
@@ -269,7 +317,6 @@
   }
 
   function environment(d) {
-    // 舒适/美观：邻近家具与装饰回复
     let comfort = 0, beauty = 0, rad = 5;
     X.Build.each(b => {
       if (!b.built || !b.def.tags) return;
@@ -281,7 +328,6 @@
     const cold = X.Solar.buff.cold && X.Solar.buff.until > X.Time.day ? 0.5 : 1;
     d.needs.comfort = Math.min(100, d.needs.comfort + 0.35 * Math.min(4, comfort) * cold);
     d.needs.beauty = Math.min(100, d.needs.beauty + 0.3 * Math.min(5, beauty));
-    // 社交：6 格内有同伴
     let near = 0;
     for (const o of D.list) if (o !== d && !o.dead && Math.hypot(o.px - d.px, o.py - d.py) < 6) near++;
     if (near) d.needs.social = Math.min(100, d.needs.social + 0.5 * near * (D.hasTrait(d, 'chatty') ? 1.4 : D.hasTrait(d, 'quiet') ? 0.7 : 1));
@@ -290,12 +336,14 @@
   function mood(d) {
     const N = d.needs;
     d.moodEv *= 0.7;
-    const m = 40
+    let m = 40
       + (N.hunger - 50) * 0.20 + (N.sleep - 50) * 0.20
       + (N.comfort - 50) * 0.12 + (N.beauty - 50) * 0.12 + (N.social - 50) * 0.08
       + d.moodEv;
+    if (D.hasTrait(d, 'leyi')) m += 6;
+    if (D.hasTrait(d, 'daochi') && d.task && d.task.type === 'cultivate') m += 4;
     d.mood = Math.max(0, Math.min(100, m));
-    if (d.mood < 10 && X.rng.chance(0.3)) {   // 心境崩溃：小憩一日
+    if (d.mood < 10 && X.rng.chance(0.3)) {
       d.moodEv += 15;
       X.Game.log(`${d.name} 心境郁结，需要休整`);
       if (d.task && d.task.job) X.Work.release(d.task.job, d);
@@ -304,8 +352,8 @@
     }
   }
 
-  // 领任务（由 Work 调用）
   D.takeJob = function (d, job) {
+    if (d.kind !== '杂役') return false;
     if (d.task && d.task.job) X.Work.release(d.task.job, d);
     d.task = { type: job.type, job: job.id, phase: 'go', tx: job.tx, ty: job.ty, bid: job.bid, timer: job.timer };
     if (!setPath(d, job.tx, job.ty)) { d.task = null; return false; }
@@ -313,18 +361,24 @@
   };
 
   D.snapshot = () => D.list.map(d => ({
-    name: d.name, stats: { ...d.stats }, linggen: d.linggen, traits: [...d.traits],
+    name: d.name, kind: d.kind, stats: { ...d.stats }, linggen: d.linggen, traits: [...d.traits],
     skills: { ...d.skills }, px: d.px, py: d.py, needs: { ...d.needs },
     mood: d.mood, moodEv: d.moodEv, hp: d.hp, bed: d.bed,
+    realm: d.realm, stage: d.stage, exp: d.exp, scId: d.scId,
+    eligible: d.eligible, readyDay: d.readyDay, breakCd: d.breakCd, failPity: d.failPity,
+    cultSpot: d.cultSpot, bornDay: d.bornDay,
   }));
   D.restore = function (arr) {
     D.list = []; D.nextId = 1;
     for (const r of arr) {
       const d = D.gen(0, 0);
       Object.assign(d, {
-        name: r.name, stats: r.stats, linggen: r.linggen, traits: r.traits,
+        name: r.name, kind: r.kind || '杂役', stats: r.stats, linggen: r.linggen, traits: r.traits,
         skills: r.skills, px: r.px, py: r.py, x: r.px | 0, y: r.py | 0,
         needs: r.needs, mood: r.mood, moodEv: r.moodEv, hp: r.hp, bed: r.bed, task: null, carry: null,
+        realm: r.realm || 0, stage: r.stage || 0, exp: r.exp || 0, scId: r.scId || '',
+        eligible: !!r.eligible, readyDay: r.readyDay || 0, breakCd: r.breakCd || 0, failPity: r.failPity || 0,
+        cultSpot: r.cultSpot || 0, bornDay: r.bornDay !== undefined ? r.bornDay : X.Time.day - 20 * 360,
       });
       D.list.push(d);
     }

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>样张22 · 鬼谷水墨·洞府经营</title>
+<style>
+  body{margin:0;background:#262019;height:100vh;display:flex;align-items:center;justify-content:center;font-family:"Kaiti SC","STKaiti",serif}
+  canvas{max-width:96vw;max-height:92vh;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  .tag{position:fixed;top:10px;left:16px;color:#e8e0cc;font-size:15px;letter-spacing:3px}
+  .cap{position:fixed;bottom:8px;left:16px;color:#9a8f78;font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="600"></canvas>
+<div class="tag">22 · 鬼谷水墨·洞府经营（对标《鬼谷八荒》）</div>
+<div class="cap">宣纸底 + 毛边笔触框UI + 水墨淡彩场景 + 皴法山石 + 丹炉灵气 —— 洞府经营方向</div>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const W = 960, H = 600;
+const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(20260922);
+const INK = '#33302a';
+const ZHU = '#a83a2a';
+const GOLD = '#b8934e';
+
+/* ================= 一、宣纸底 ================= */
+const paper = g.createLinearGradient(0, 0, W, H);
+paper.addColorStop(0, '#ece4cf');
+paper.addColorStop(0.5, '#e7dec7');
+paper.addColorStop(1, '#e0d5ba');
+g.fillStyle = paper; g.fillRect(0, 0, W, H);
+// 纸纤维
+for (let i = 0; i < 1600; i++) {
+  const x = rnd() * W, y = rnd() * H;
+  g.strokeStyle = rnd() < 0.5 ? 'rgba(178,164,134,0.09)' : 'rgba(252,248,236,0.1)';
+  g.lineWidth = 0.6;
+  const a = rnd() * Math.PI, l = 2 + rnd() * 7;
+  g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l * 0.25); g.stroke();
+}
+// 霉斑晕点
+for (let i = 0; i < 26; i++) {
+  const x = rnd() * W, y = rnd() * H, r = 6 + rnd() * 26;
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, 'rgba(168,150,116,0.07)');
+  gr.addColorStop(1, 'rgba(168,150,116,0)');
+  g.fillStyle = gr;
+  g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+}
+
+/* ================= 二、淡墨远山（上缘） ================= */
+function inkPeak(cx, yBase, w, h, alpha) {
+  const gr = g.createLinearGradient(0, yBase - h, 0, yBase + 10);
+  gr.addColorStop(0, `rgba(96,106,112,${alpha})`);
+  gr.addColorStop(0.75, `rgba(96,106,112,${alpha * 0.4})`);
+  gr.addColorStop(1, 'rgba(96,106,112,0)');
+  g.fillStyle = gr;
+  g.beginPath();
+  g.moveTo(cx - w, yBase + 10);
+  g.quadraticCurveTo(cx - w * 0.4, yBase - h * 0.55, cx - w * 0.15, yBase - h * 0.85);
+  g.quadraticCurveTo(cx, yBase - h * 1.05, cx + w * 0.2, yBase - h * 0.8);
+  g.quadraticCurveTo(cx + w * 0.5, yBase - h * 0.5, cx + w, yBase + 10);
+  g.closePath(); g.fill();
+}
+inkPeak(70, 140, 120, 64, 0.15);
+inkPeak(180, 136, 80, 44, 0.11);
+inkPeak(846, 136, 130, 70, 0.14);
+inkPeak(946, 142, 80, 46, 0.1);
+
+/* ================= 三、坡地水墨草色 ================= */
+function grassMound(cx, cy, rx, ry, color, alpha) {
+  const gr = g.createRadialGradient(cx, cy, 0, cx, cy, rx);
+  gr.addColorStop(0, color.replace('ALPHA', alpha));
+  gr.addColorStop(0.7, color.replace('ALPHA', alpha * 0.55));
+  gr.addColorStop(1, color.replace('ALPHA', 0));
+  g.fillStyle = gr;
+  g.save(); g.translate(cx, cy); g.scale(1, ry / rx);
+  g.beginPath(); g.arc(0, 0, rx, 0, 7); g.fill();
+  g.restore();
+}
+grassMound(480, 360, 560, 190, 'rgba(148,163,128,ALPHA)', 0.75);
+grassMound(220, 400, 340, 150, 'rgba(126,143,113,ALPHA)', 0.6);
+grassMound(760, 390, 320, 150, 'rgba(138,150,122,ALPHA)', 0.55);
+grassMound(480, 330, 420, 120, 'rgba(164,176,140,ALPHA)', 0.5);
+// 草地笔触（短线簇）
+for (let i = 0; i < 260; i++) {
+  const cx = 60 + rnd() * 840;
+  const cy = 250 + rnd() * 200;
+  const depth = (cy - 240) / 210;
+  g.strokeStyle = `rgba(${70 + rnd() * 30 | 0},${92 + rnd() * 26 | 0},${64 + rnd() * 20 | 0},${0.14 + depth * 0.22})`;
+  g.lineWidth = 0.8 + depth * 0.7;
+  const lean = (rnd() - 0.5) * 8, h = 5 + depth * 9 + rnd() * 5;
+  g.beginPath(); g.moveTo(cx, cy);
+  g.quadraticCurveTo(cx + lean * 0.4, cy - h * 0.6, cx + lean, cy - h);
+  g.stroke();
+}
+// 水彩晕斑
+for (let i = 0; i < 14; i++) {
+  grassMound(140 + rnd() * 700, 280 + rnd() * 160, 30 + rnd() * 60, 12 + rnd() * 22,
+    rnd() < 0.5 ? 'rgba(108,128,96,ALPHA)' : 'rgba(186,192,150,ALPHA)', 0.2);
+}
+// 下半坡加深覆盖
+grassMound(480, 430, 620, 160, 'rgba(134,150,116,ALPHA)', 0.6);
+grassMound(560, 470, 520, 130, 'rgba(120,136,104,ALPHA)', 0.5);
+// 中景横雾
+const mistG = g.createLinearGradient(0, 236, 0, 288);
+mistG.addColorStop(0, 'rgba(236,228,207,0)');
+mistG.addColorStop(0.5, 'rgba(236,228,207,0.5)');
+mistG.addColorStop(1, 'rgba(236,228,207,0)');
+g.fillStyle = mistG; g.fillRect(0, 236, W, 52);
+
+/* ================= 四、皴法山石（左） ================= */
+function rockScatter(cx, cy, w, h, seedScale) {
+  // 轮廓：不规则多边形（微抖）
+  const pts = [];
+  const n = 11;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2;
+    const rr = (0.7 + rnd() * 0.45) * seedScale;
+    pts.push([cx + Math.cos(a) * w * rr, cy + Math.sin(a) * h * rr]);
+  }
+  g.beginPath();
+  pts.forEach(([px, py], i) => {
+    if (i === 0) { g.moveTo(px, py); return; }
+    const [qx, qy] = pts[i - 1];
+    g.quadraticCurveTo((qx + px) / 2 + (rnd() - 0.5) * 6, (qy + py) / 2 + (rnd() - 0.5) * 6, px, py);
+  });
+  g.closePath();
+  // 淡彩底
+  const gr = g.createLinearGradient(cx, cy - h, cx, cy + h);
+  gr.addColorStop(0, 'rgba(196,196,182,0.95)');
+  gr.addColorStop(1, 'rgba(148,150,138,0.95)');
+  g.fillStyle = gr; g.fill();
+  // 披麻皴：随形长弧线
+  g.strokeStyle = 'rgba(74,72,64,0.55)'; g.lineWidth = 1.2; g.lineCap = 'round';
+  for (let i = 0; i < 9; i++) {
+    const t = i / 9;
+    const x0 = cx - w * 0.6 + t * w * 1.1;
+    g.beginPath();
+    g.moveTo(x0 + (rnd() - 0.5) * 8, cy - h * 0.5 + rnd() * h * 0.2);
+    g.quadraticCurveTo(x0 - 8 + (rnd() - 0.5) * 10, cy, x0 + (rnd() - 0.5) * 6, cy + h * (0.4 + rnd() * 0.3));
+    g.stroke();
+  }
+  // 墨线轮廓（重描两遍）
+  for (let p = 0; p < 2; p++) {
+    g.strokeStyle = `rgba(56,52,46,${p ? 0.35 : 0.8})`; g.lineWidth = p ? 3 : 1.6;
+    g.beginPath();
+    pts.forEach(([px, py], i) => {
+      const jx = (rnd() - 0.5) * 2.4, jy = (rnd() - 0.5) * 2.4;
+      i ? g.lineTo(px + jx, py + jy) : g.moveTo(px + jx, py + jy);
+    });
+    g.closePath(); g.stroke();
+  }
+}
+rockScatter(148, 348, 74, 40, 1);
+rockScatter(226, 372, 46, 26, 1);
+rockScatter(88, 392, 40, 22, 1);
+
+/* ================= 五、建筑 ================= */
+// 主殿（洞府，中右）
+function hall(cx, baseY, s) {
+  // 台基
+  g.strokeStyle = INK; g.lineWidth = 1.6;
+  g.fillStyle = 'rgba(190,182,160,0.9)';
+  g.beginPath();
+  g.moveTo(cx - 92 * s, baseY);
+  g.lineTo(cx + 92 * s, baseY);
+  g.lineTo(cx + 80 * s, baseY + 15 * s);
+  g.lineTo(cx - 80 * s, baseY + 15 * s);
+  g.closePath(); g.fill(); g.stroke();
+  // 墙与柱
+  g.fillStyle = '#d9cdb0';
+  g.fillRect(cx - 58 * s, baseY - 56 * s, 116 * s, 56 * s);
+  g.strokeStyle = INK; g.strokeRect(cx - 58 * s, baseY - 56 * s, 116 * s, 56 * s);
+  g.lineWidth = 2.2;
+  for (let i = -2; i <= 2; i++) {
+    g.beginPath(); g.moveTo(cx + i * 29 * s, baseY); g.lineTo(cx + i * 29 * s, baseY - 56 * s); g.stroke();
+  }
+  // 门
+  g.fillStyle = '#4a4034';
+  g.fillRect(cx - 10 * s, baseY - 32 * s, 20 * s, 32 * s);
+  g.strokeRect(cx - 10 * s, baseY - 32 * s, 20 * s, 32 * s);
+  // 主屋顶（收窄、坡度陡、檐角上翘）
+  g.fillStyle = '#5d6e67';
+  g.beginPath();
+  g.moveTo(cx - 88 * s, baseY - 54 * s);
+  g.quadraticCurveTo(cx - 60 * s, baseY - 66 * s, cx - 44 * s, baseY - 84 * s);
+  g.quadraticCurveTo(cx - 24 * s, baseY - 102 * s, cx, baseY - 104 * s);
+  g.quadraticCurveTo(cx + 24 * s, baseY - 102 * s, cx + 44 * s, baseY - 84 * s);
+  g.quadraticCurveTo(cx + 60 * s, baseY - 66 * s, cx + 88 * s, baseY - 54 * s);
+  // 檐口内凹回勾
+  g.quadraticCurveTo(cx + 78 * s, baseY - 62 * s, cx + 64 * s, baseY - 60 * s);
+  g.quadraticCurveTo(cx, baseY - 76 * s, cx - 64 * s, baseY - 60 * s);
+  g.quadraticCurveTo(cx - 78 * s, baseY - 62 * s, cx - 88 * s, baseY - 54 * s);
+  g.closePath(); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 1.8; g.stroke();
+  // 戗脊（垂脊到檐角）
+  g.lineWidth = 1.6;
+  g.beginPath(); g.moveTo(cx - 8 * s, baseY - 102 * s); g.quadraticCurveTo(cx - 52 * s, baseY - 92 * s, cx - 86 * s, baseY - 56 * s); g.stroke();
+  g.beginPath(); g.moveTo(cx + 8 * s, baseY - 102 * s); g.quadraticCurveTo(cx + 52 * s, baseY - 92 * s, cx + 86 * s, baseY - 56 * s); g.stroke();
+  // 宝顶
+  g.fillStyle = INK;
+  g.beginPath(); g.arc(cx, baseY - 107 * s, 3 * s, 0, 7); g.fill();
+  // 匾额
+  g.fillStyle = '#22301f';
+  g.fillRect(cx - 24 * s, baseY - 52 * s, 48 * s, 14 * s);
+  g.fillStyle = GOLD; g.font = `${12 * s | 0}px "Kaiti SC",serif`; g.textAlign = 'center';
+  g.fillText('云隐殿', cx, baseY - 41 * s);
+}
+hall(566, 330, 1.0);
+// 茅屋 ×2
+function hut(cx, baseY, s) {
+  g.strokeStyle = INK; g.lineWidth = 1.6;
+  g.fillStyle = '#cfc3a4';
+  g.beginPath();
+  g.moveTo(cx - 34 * s, baseY); g.lineTo(cx - 34 * s, baseY - 30 * s);
+  g.lineTo(cx + 34 * s, baseY - 30 * s); g.lineTo(cx + 34 * s, baseY);
+  g.closePath(); g.fill(); g.stroke();
+  // 茅草顶
+  g.fillStyle = '#ab9468';
+  g.beginPath();
+  g.moveTo(cx - 46 * s, baseY - 28 * s);
+  g.quadraticCurveTo(cx, baseY - 62 * s, cx + 46 * s, baseY - 28 * s);
+  g.quadraticCurveTo(cx, baseY - 40 * s, cx - 46 * s, baseY - 28 * s);
+  g.closePath(); g.fill(); g.stroke();
+  // 顶面草纹
+  g.lineWidth = 1;
+  for (let i = 0; i < 7; i++) {
+    const t = -0.8 + i * 0.28;
+    g.beginPath();
+    g.moveTo(cx + t * 30 * s, baseY - 32 * s - Math.cos(t) * 14 * s);
+    g.quadraticCurveTo(cx + t * 34 * s, baseY - 46 * s, cx + t * 36 * s, baseY - 50 * s - Math.cos(t) * 8 * s);
+    g.stroke();
+  }
+  // 门 + 窗
+  g.fillStyle = '#4a4034'; g.fillRect(cx - 6 * s, baseY - 15 * s, 12 * s, 15 * s);
+  g.strokeRect(cx - 6 * s, baseY - 15 * s, 12 * s, 15 * s);
+  g.strokeRect(cx + 14 * s, baseY - 21 * s, 9 * s, 9 * s);
+  g.beginPath();
+  g.moveTo(cx + 18.5 * s, baseY - 21 * s); g.lineTo(cx + 18.5 * s, baseY - 12 * s);
+  g.moveTo(cx + 14 * s, baseY - 16.5 * s); g.lineTo(cx + 23 * s, baseY - 16.5 * s);
+  g.stroke();
+}
+hut(338, 296, 0.8);
+hut(782, 372, 0.9);
+
+/* ================= 六、竹与松 ================= */
+// 竹林（左缘）
+function bamboo(cx, baseY, h, lean) {
+  g.strokeStyle = 'rgba(96,116,84,0.9)'; g.lineWidth = 3;
+  const seg = 5;
+  for (let i = 0; i < seg; i++) {
+    const y0 = baseY - (h / seg) * i, y1 = baseY - (h / seg) * (i + 1);
+    g.beginPath(); g.moveTo(cx + lean * i, y0); g.lineTo(cx + lean * (i + 0.9), y1); g.stroke();
+  }
+  // 叶簇（个字）
+  g.lineWidth = 1.6; g.lineCap = 'round';
+  const topX = cx + lean * seg * 0.9, topY = baseY - h;
+  for (let c = 0; c < 7; c++) {
+    const bx = topX + (rnd() - 0.5) * 34, by = topY + rnd() * h * 0.5;
+    for (let k = -1; k <= 1; k++) {
+      g.strokeStyle = `rgba(${74 + rnd() * 24 | 0},${102 + rnd() * 22 | 0},${70 + rnd() * 16 | 0},${0.55 + rnd() * 0.35})`;
+      g.beginPath(); g.moveTo(bx, by);
+      g.quadraticCurveTo(bx + k * 7, by - 7, bx + k * 13, by - 12 - rnd() * 4);
+      g.stroke();
+    }
+  }
+}
+bamboo(56, 430, 130, 4); bamboo(84, 442, 150, -5); bamboo(112, 436, 120, 3); bamboo(36, 420, 105, 5);
+// 松（右缘）
+function pineTree(cx, baseY, s) {
+  g.strokeStyle = '#4a4236'; g.lineWidth = 5 * s; g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(cx, baseY);
+  g.quadraticCurveTo(cx + 10 * s, baseY - 50 * s, cx - 6 * s, baseY - 92 * s);
+  g.stroke();
+  g.lineWidth = 2.6 * s;
+  g.beginPath(); g.moveTo(cx + 2 * s, baseY - 60 * s); g.quadraticCurveTo(cx + 34 * s, baseY - 78 * s, cx + 46 * s, baseY - 88 * s); g.stroke();
+  g.beginPath(); g.moveTo(cx - 3 * s, baseY - 74 * s); g.quadraticCurveTo(cx - 30 * s, baseY - 88 * s, cx - 40 * s, baseY - 96 * s); g.stroke();
+  // 松针团（放射针叶）
+  function tuft(tx, ty, r) {
+    for (let i = 0; i < 42; i++) {
+      const a = rnd() * Math.PI * 2;
+      const r1 = r * 0.2, r2 = r * (0.7 + rnd() * 0.5);
+      g.strokeStyle = `rgba(${58 + rnd() * 20 | 0},${88 + rnd() * 22 | 0},${64 + rnd() * 16 | 0},${0.5 + rnd() * 0.4})`;
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.moveTo(tx + Math.cos(a) * r1, ty + Math.sin(a) * r1);
+      g.lineTo(tx + Math.cos(a) * r2, ty + Math.sin(a) * r2);
+      g.stroke();
+    }
+  }
+  tuft(cx - 6 * s, baseY - 96 * s, 26 * s);
+  tuft(cx + 46 * s, baseY - 88 * s, 20 * s);
+  tuft(cx - 40 * s, baseY - 96 * s, 18 * s);
+}
+pineTree(912, 434, 1.0);
+
+/* ================= 七、丹炉 + 灵气 + 弟子 ================= */
+// 小径
+const pathG = g.createLinearGradient(300, 0, 560, 0);
+pathG.addColorStop(0, 'rgba(196,172,128,0.4)');
+pathG.addColorStop(1, 'rgba(196,172,128,0.25)');
+g.fillStyle = pathG;
+g.beginPath();
+g.moveTo(288, 470);
+g.quadraticCurveTo(360, 420, 420, 396);
+g.quadraticCurveTo(480, 372, 520, 346);
+g.lineTo(540, 352);
+g.quadraticCurveTo(492, 384, 438, 410);
+g.quadraticCurveTo(392, 432, 336, 476);
+g.closePath(); g.fill();
+// 小径石点
+for (let i = 0; i < 12; i++) {
+  const t = i / 12;
+  const px = 300 + t * 220 + (rnd() - 0.5) * 20;
+  const py = 466 - t * 110 + (rnd() - 0.5) * 10;
+  g.fillStyle = 'rgba(120,108,84,0.4)';
+  g.beginPath(); g.ellipse(px, py, 2.6, 1.6, rnd(), 0, 7); g.fill();
+}
+// 丹炉
+(function () {
+  const cx = 470, cy = 408;
+  // 灵气（先画，炉压前面）
+  for (let i = 0; i < 9; i++) {
+    const t = i / 9;
+    const px = cx + Math.sin(t * 7 + 1) * (10 + t * 16);
+    const py = cy - 26 - t * 92;
+    const r = 4 + t * 9;
+    const gr = g.createRadialGradient(px, py, 0, px, py, r);
+    gr.addColorStop(0, `rgba(116,182,164,${0.5 - t * 0.32})`);
+    gr.addColorStop(1, 'rgba(116,182,164,0)');
+    g.fillStyle = gr;
+    g.beginPath(); g.arc(px, py, r, 0, 7); g.fill();
+  }
+  // 炉身
+  g.fillStyle = '#5a5248';
+  g.beginPath();
+  g.moveTo(cx - 16, cy - 22);
+  g.quadraticCurveTo(cx - 22, cy - 2, cx - 14, cy + 10);
+  g.lineTo(cx + 14, cy + 10);
+  g.quadraticCurveTo(cx + 22, cy - 2, cx + 16, cy - 22);
+  g.closePath(); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 1.6; g.stroke();
+  // 双耳三足
+  g.lineWidth = 2.6;
+  g.beginPath(); g.arc(cx - 13, cy - 19, 4.5, Math.PI * 0.85, Math.PI * 1.85); g.stroke();
+  g.beginPath(); g.arc(cx + 13, cy - 19, 4.5, Math.PI * 1.15, Math.PI * 0.15); g.stroke();
+  g.lineWidth = 3.4;
+  g.beginPath(); g.moveTo(cx - 10, cy + 10); g.lineTo(cx - 14, cy + 20); g.stroke();
+  g.beginPath(); g.moveTo(cx + 10, cy + 10); g.lineTo(cx + 14, cy + 20); g.stroke();
+  g.beginPath(); g.moveTo(cx, cy + 10); g.lineTo(cx, cy + 21); g.stroke();
+  // 炉口火光
+  const fg = g.createRadialGradient(cx, cy - 24, 0, cx, cy - 24, 12);
+  fg.addColorStop(0, 'rgba(240,180,96,0.8)');
+  fg.addColorStop(1, 'rgba(240,180,96,0)');
+  g.fillStyle = fg;
+  g.beginPath(); g.arc(cx, cy - 24, 12, 0, 7); g.fill();
+})();
+// 弟子（持帚扫地，线描淡彩）
+(function disciple() {
+  const x = 424, y = 430;
+  // 影
+  g.fillStyle = 'rgba(80,72,54,0.3)';
+  g.beginPath(); g.ellipse(x, y + 2, 14, 3.6, 0, 0, 7); g.fill();
+  // 袍（直筒微摆）
+  g.fillStyle = '#7d9a92';
+  g.beginPath();
+  g.moveTo(x - 7, y - 32);
+  g.quadraticCurveTo(x - 10, y - 14, x - 11, y);
+  g.lineTo(x + 11, y);
+  g.quadraticCurveTo(x + 10, y - 14, x + 7, y - 32);
+  g.closePath(); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 1.4; g.stroke();
+  // 衣纹
+  g.strokeStyle = 'rgba(40,52,48,0.5)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(x - 2, y - 26); g.lineTo(x - 3, y - 4); g.stroke();
+  // 腰带
+  g.strokeStyle = '#5a4030'; g.lineWidth = 2.4;
+  g.beginPath(); g.moveTo(x - 7, y - 24); g.lineTo(x + 7, y - 24); g.stroke();
+  // 头
+  g.fillStyle = '#e8d9c2';
+  g.beginPath(); g.arc(x, y - 39, 5.6, 0, 7); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 1.3; g.stroke();
+  // 束发 + 髻
+  g.fillStyle = '#2c2824';
+  g.beginPath(); g.arc(x, y - 41, 5.2, Math.PI * 0.95, Math.PI * 2.05); g.fill();
+  g.beginPath(); g.arc(x + 1, y - 47.5, 2.8, 0, 7); g.fill();
+  // 眼
+  g.fillStyle = INK;
+  g.beginPath(); g.arc(x + 3.4, y - 39.5, 0.7, 0, 7); g.fill();
+  // 帚
+  g.strokeStyle = '#8a6a44'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x + 11, y - 16); g.lineTo(x + 23, y + 2); g.stroke();
+  g.strokeStyle = '#b08a5c'; g.lineWidth = 1.6;
+  for (let i = -2; i <= 2; i++) {
+    g.beginPath(); g.moveTo(x + 23, y + 2); g.lineTo(x + 23 + i * 3.2, y + 9); g.stroke();
+  }
+  // 手臂
+  g.strokeStyle = INK; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(x + 6, y - 25); g.quadraticCurveTo(x + 12, y - 21, x + 11, y - 16); g.stroke();
+})();
+// 灵鹤（右上）
+(function crane() {
+  const x = 706, y = 108;
+  g.save(); g.translate(x, y); g.rotate(-0.08);
+  g.fillStyle = '#f4efe2';
+  g.beginPath(); g.ellipse(0, 0, 15, 6.5, 0, 0, 7); g.fill();
+  g.strokeStyle = INK; g.lineWidth = 1.2;
+  g.stroke();
+  // 翅（展开，墨尖）
+  g.fillStyle = '#e9e2ce';
+  g.beginPath();
+  g.moveTo(-4, -2); g.quadraticCurveTo(-16, -22, -34, -26);
+  g.quadraticCurveTo(-20, -10, -8, 2);
+  g.closePath(); g.fill(); g.stroke();
+  // 颈 + 头
+  g.lineWidth = 2.2;
+  g.beginPath();
+  g.moveTo(11, -3); g.quadraticCurveTo(21, -6, 24, -15);
+  g.stroke();
+  g.fillStyle = '#f4efe2';
+  g.beginPath(); g.arc(25, -18, 3.2, 0, 7); g.fill();
+  g.lineWidth = 1.2; g.stroke();
+  g.fillStyle = ZHU;
+  g.beginPath(); g.arc(24.4, -20.4, 1.6, 0, 7); g.fill();
+  // 喙 + 尾墨
+  g.strokeStyle = INK;
+  g.beginPath(); g.moveTo(28, -18); g.lineTo(33, -17); g.stroke();
+  g.fillStyle = INK;
+  g.beginPath(); g.ellipse(-13, 2, 6, 3, 0.3, 0, 7); g.fill();
+  // 脚
+  g.lineWidth = 1;
+  g.beginPath(); g.moveTo(2, 6); g.lineTo(4, 11); g.stroke();
+  g.beginPath(); g.moveTo(-2, 6); g.lineTo(-3, 11); g.stroke();
+  g.restore();
+})();
+
+/* ================= 八、UI：毛边面板 + 资源栏 + 底部卷轴 ================= */
+function roughPanel(x, y, w, h, fill, border) {
+  const per = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+  const build = () => {
+    g.beginPath();
+    for (let e = 0; e < 4; e++) {
+      const x0 = per[e][0], y0 = per[e][1], x1 = per[(e + 1) % 4][0], y1 = per[(e + 1) % 4][1];
+      for (let i = 0; i <= 5; i++) {
+        const t = i / 5;
+        const px = x0 + (x1 - x0) * t + (rnd() - 0.5) * 2.6;
+        const py = y0 + (y1 - y0) * t + (rnd() - 0.5) * 2.6;
+        (e === 0 && i === 0) ? g.moveTo(px, py) : g.lineTo(px, py);
+      }
+    }
+    g.closePath();
+  };
+  g.save();
+  g.shadowColor = 'rgba(60,50,34,0.35)'; g.shadowBlur = 8; g.shadowOffsetY = 3;
+  build(); g.fillStyle = fill; g.fill();
+  g.restore();
+  build(); g.strokeStyle = border; g.lineWidth = 1.8; g.stroke();
+  build(); g.strokeStyle = 'rgba(56,50,40,0.35)'; g.lineWidth = 3.4; g.stroke();
+}
+// 左上资源栏
+roughPanel(16, 14, 320, 52, 'rgba(240,232,212,0.94)', '#6a5f4c');
+g.font = '15px "Kaiti SC",serif'; g.textAlign = 'left';
+// 灵石
+g.fillStyle = '#6f9a8c';
+g.beginPath(); g.moveTo(42, 28); g.lineTo(54, 40); g.lineTo(42, 52); g.lineTo(30, 40); g.closePath(); g.fill();
+g.strokeStyle = INK; g.lineWidth = 1.3; g.stroke();
+g.fillStyle = INK; g.fillText('灵石', 58, 45);
+g.font = '13px "Kaiti SC",serif'; g.fillStyle = '#5a4f3e'; g.fillText('128', 90, 45);
+// 分隔
+g.strokeStyle = 'rgba(106,95,76,0.4)'; g.lineWidth = 1;
+g.beginPath(); g.moveTo(124, 20); g.lineTo(124, 60); g.stroke();
+// 木材
+g.strokeStyle = '#8a6a44'; g.lineWidth = 6;
+g.beginPath(); g.moveTo(140, 33); g.lineTo(172, 33); g.stroke();
+g.beginPath(); g.moveTo(140, 45); g.lineTo(172, 45); g.stroke();
+g.fillStyle = '#c9a878';
+g.beginPath(); g.arc(140, 33, 3.6, 0, 7); g.fill();
+g.beginPath(); g.arc(140, 45, 3.6, 0, 7); g.fill();
+g.font = '15px "Kaiti SC",serif'; g.fillStyle = INK; g.fillText('木材', 182, 45);
+g.font = '13px "Kaiti SC",serif'; g.fillStyle = '#5a4f3e'; g.fillText('212', 214, 45);
+// 分隔
+g.strokeStyle = 'rgba(106,95,76,0.4)'; g.lineWidth = 1;
+g.beginPath(); g.moveTo(248, 20); g.lineTo(248, 60); g.stroke();
+// 丹药
+g.fillStyle = ZHU;
+g.beginPath(); g.arc(262, 39, 7.5, 0, 7); g.fill();
+g.fillStyle = 'rgba(255,222,190,0.75)';
+g.beginPath(); g.arc(259, 36, 2.8, 0, 7); g.fill();
+g.font = '15px "Kaiti SC",serif'; g.fillStyle = INK; g.fillText('丹药', 276, 45);
+
+/* 右侧竖排题字 + 印章 */
+g.fillStyle = 'rgba(48,44,38,0.85)';
+g.font = '21px "Kaiti SC",serif'; g.textAlign = 'center';
+const colA = '洞天福地', colB = '灵机自生';
+for (let i = 0; i < colA.length; i++) g.fillText(colA[i], 906, 64 + i * 26);
+g.font = '16px "Kaiti SC",serif';
+g.fillStyle = 'rgba(48,44,38,0.6)';
+for (let i = 0; i < colB.length; i++) g.fillText(colB[i], 876, 88 + i * 22);
+// 朱砂印
+g.fillStyle = ZHU; g.globalAlpha = 0.92;
+g.fillRect(892, 182, 30, 30);
+g.globalAlpha = 1;
+g.fillStyle = '#f0e8d4'; g.font = '13px "Kaiti SC",serif';
+g.fillText('云', 907, 195); g.fillText('隐', 907, 209);
+
+/* 底部卷轴功能条 */
+(function () {
+  const y = 540, x0 = 60, x1 = 900;
+  // 卷轴纸面
+  const scG = g.createLinearGradient(0, y - 26, 0, y + 26);
+  scG.addColorStop(0, '#efe7d2');
+  scG.addColorStop(0.5, '#e6dcc2');
+  scG.addColorStop(1, '#d8cdb0');
+  g.fillStyle = scG;
+  g.fillRect(x0 + 14, y - 25, x1 - x0 - 28, 50);
+  g.strokeStyle = 'rgba(90,80,60,0.6)'; g.lineWidth = 1.4;
+  g.strokeRect(x0 + 14, y - 25, x1 - x0 - 28, 50);
+  // 两端轴头
+  [x0, x1].forEach(ax => {
+    const rg = g.createLinearGradient(ax - 9, 0, ax + 9, 0);
+    rg.addColorStop(0, '#241f19');
+    rg.addColorStop(0.5, '#4c4438');
+    rg.addColorStop(1, '#241f19');
+    g.fillStyle = rg;
+    g.fillRect(ax - 9, y - 32, 18, 64);
+    g.fillStyle = '#1a1612';
+    g.beginPath(); g.arc(ax, y - 32, 9, 0, 7); g.fill();
+    g.beginPath(); g.arc(ax, y + 32, 9, 0, 7); g.fill();
+    g.fillStyle = GOLD;
+    g.beginPath(); g.arc(ax, y - 32, 3, 0, 7); g.fill();
+    g.beginPath(); g.arc(ax, y + 32, 3, 0, 7); g.fill();
+  });
+  // 五个圆形功能图标
+  const items = ['营造', '炼丹', '功法', '弟子', '历法'];
+  items.forEach((label, i) => {
+    const cx = x0 + 96 + i * 148, cy = y;
+    // 纸底圆
+    g.fillStyle = '#e2d7ba';
+    g.beginPath(); g.arc(cx, cy, 21, 0, 7); g.fill();
+    g.strokeStyle = '#6a5f4c'; g.lineWidth = 2; g.stroke();
+    g.strokeStyle = 'rgba(106,95,76,0.4)'; g.lineWidth = 4.5;
+    g.beginPath(); g.arc(cx, cy, 24.5, 0, 7); g.stroke();
+    // 图形
+    g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = 1.8;
+    if (i === 0) { // 营造：小屋
+      g.beginPath(); g.moveTo(cx - 9, cy + 6); g.lineTo(cx - 9, cy - 2); g.lineTo(cx, cy - 10); g.lineTo(cx + 9, cy - 2); g.lineTo(cx + 9, cy + 6); g.closePath(); g.stroke();
+    } else if (i === 1) { // 炼丹：炉
+      g.beginPath(); g.moveTo(cx - 7, cy - 6); g.quadraticCurveTo(cx - 9, cy + 4, cx - 5, cy + 8); g.lineTo(cx + 5, cy + 8); g.quadraticCurveTo(cx + 9, cy + 4, cx + 7, cy - 6); g.closePath(); g.stroke();
+      g.beginPath(); g.moveTo(cx - 9, cy - 6); g.lineTo(cx + 9, cy - 6); g.stroke();
+      g.fillStyle = ZHU; g.beginPath(); g.arc(cx, cy + 1, 2, 0, 7); g.fill();
+    } else if (i === 2) { // 功法：太极
+      g.beginPath(); g.arc(cx, cy, 9, 0, 7); g.stroke();
+      g.beginPath(); g.arc(cx, cy - 4.5, 4.5, -Math.PI / 2, Math.PI / 2, true); g.stroke();
+      g.beginPath(); g.arc(cx, cy + 4.5, 4.5, -Math.PI / 2, Math.PI / 2); g.stroke();
+      g.beginPath(); g.arc(cx, cy + 4.5, 1.6, 0, 7); g.fill();
+    } else if (i === 3) { // 弟子：人
+      g.beginPath(); g.arc(cx, cy - 4, 4, 0, 7); g.stroke();
+      g.beginPath(); g.moveTo(cx - 7, cy + 9); g.quadraticCurveTo(cx, cy + 1, cx + 7, cy + 9); g.stroke();
+    } else { // 历法：节气环
+      g.beginPath(); g.arc(cx, cy, 9, 0, 7); g.stroke();
+      for (let k = 0; k < 8; k++) {
+        const a = k / 8 * Math.PI * 2;
+        g.beginPath();
+        g.moveTo(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6);
+        g.lineTo(cx + Math.cos(a) * 9, cy + Math.sin(a) * 9);
+        g.stroke();
+      }
+    }
+    // 标签
+    g.fillStyle = 'rgba(48,44,38,0.9)'; g.font = '13px "Kaiti SC",serif'; g.textAlign = 'center';
+    g.fillText(label, cx, y + 42);
+  });
+})();
+
+/* ================= 九、纸缘暗角 ================= */
+const vg = g.createRadialGradient(W / 2, H / 2, H * 0.42, W / 2, H / 2, H * 0.92);
+vg.addColorStop(0, 'rgba(110,92,60,0)');
+vg.addColorStop(1, 'rgba(110,92,60,0.22)');
+g.fillStyle = vg; g.fillRect(0, 0, W, H);
+</script>
+</body>
+</html>

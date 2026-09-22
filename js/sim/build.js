@@ -59,6 +59,12 @@
     X.Bus.emit('build:change', b);
   };
 
+  B.reset = function () {
+    B.grid.fill(0);
+    B.inst = {};
+    B.nextId = 1;
+  };
+
   B.each = function (fn) { for (const id in B.inst) fn(B.inst[id]); };
   B.builtOf = function (tag) {   // 已落成且带 tag 的建筑列表
     const out = [];

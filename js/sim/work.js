@@ -63,9 +63,9 @@
     }
   };
 
-  // 闲散弟子领岗
+  // 闲散杂役领岗（修士不事杂务）
   W.assign = function () {
-    const idle = X.Disciple.list.filter(d => !d.task && !d.dead);
+    const idle = X.Disciple.list.filter(d => !d.task && !d.dead && d.kind === '杂役');
     if (!idle.length) return;
     const open = Object.values(W.jobs).filter(j => !j.worker);
     if (!open.length) return;

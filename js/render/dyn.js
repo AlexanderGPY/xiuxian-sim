@@ -6,6 +6,7 @@
     ghost: null,     // {def, x, y, ok}
     hover: null,     // [tx, ty]
     sel: null,       // {kind:'disc', id} | {kind:'build', id} | {kind:'tile', x, y}
+    fengView: false, // 观星台解锁的风水叠加视图
   };
 
   function drawBuilding(g, b, r, z) {
@@ -80,6 +81,19 @@
     // 墨人
     const asleep = d.task && d.task.type === 'sleep';
     const bob = asleep ? 0 : Math.sin((X.Tick.count + d.id * 7) / 8) * 0.8;   // 走路轻微起伏
+    // 修行气场：境界越高环越亮（占位画法）
+    if (d.realm >= 1) {
+      const aura = 0.12 + d.realm * 0.05;
+      g.strokeStyle = X.Ink.a(X.Ink.hua, Math.min(0.6, aura));
+      g.lineWidth = 1.6;
+      g.beginPath(); g.arc(x, y - 3 * s, (9 + d.realm * 1.2) * s, 0, 7); g.stroke();
+      if (d.kind === '修士' && z > 1.0) {
+        g.fillStyle = X.Ink.a(X.Ink.hua, 0.9);
+        g.font = `${9 * z}px "Kaiti SC",serif`;
+        g.textAlign = 'center';
+        g.fillText(X.Realms.realmName(d)[0], x + 10 * s, y - 20 * s);
+      }
+    }
     g.fillStyle = K.nong;
     g.beginPath();
     g.moveTo(x - 4.4 * s, y - 7 * s + bob);
@@ -142,6 +156,24 @@
       g.fillRect(r.x + x * T * z, r.y + y * T * z, def.w * T * z, def.h * T * z);
       g.strokeStyle = ok ? X.Ink.hua : X.Ink.zhu; g.lineWidth = 1.6;
       g.strokeRect(r.x + x * T * z, r.y + y * T * z, def.w * T * z, def.h * T * z);
+    }
+    // 风水叠加视图（观星台）
+    if (Dyn.fengView && X.Feng) {
+      const GC = { 大吉: X.Ink.zhu, 吉: '#3d7a52', 平: X.Ink.dan, 凶: X.Ink.jiao };
+      for (const room of X.Feng.get()) {
+        const bx = r.x + room.bbox.minX * T * z, by = r.y + room.bbox.minY * T * z;
+        const bw = (room.bbox.maxX - room.bbox.minX + 1) * T * z, bh = (room.bbox.maxY - room.bbox.minY + 1) * T * z;
+        g.fillStyle = X.Ink.a(GC[room.grade], 0.10);
+        g.fillRect(bx, by, bw, bh);
+        g.strokeStyle = GC[room.grade]; g.lineWidth = 2;
+        g.setLineDash([6, 4]);
+        g.strokeRect(bx, by, bw, bh);
+        g.setLineDash([]);
+        g.fillStyle = GC[room.grade];
+        g.font = `${12 * Math.min(1.4, z)}px "Kaiti SC",serif`;
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText(`${room.grade}·${X.Map.ELEM[room.dom]}`, bx + bw / 2, by + bh / 2);
+      }
     }
     // 夜色
     const sh = X.Time.shichen;

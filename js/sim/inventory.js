@@ -29,6 +29,7 @@
   };
   I.count = item => I.stock[item];
   I.foodCount = () => I.stock.meal + I.stock.grain;
+  I.reset = () => { for (const k in I.stock) I.stock[k] = 0; };
 
   // 存储点：找离 (x,y) 最近的已落成仓储建筑（供 AI 行走目标）
   I.nearestStore = function (x, y) {

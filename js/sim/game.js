@@ -35,13 +35,22 @@
   }
 
   G.init = function (seed) {
+    // 全量清场（跨局/读档安全）
+    X.Build.reset();
+    X.Disciple.list = [];
+    X.Disciple.nextId = 1;
+    X.Inv.reset();
+    X.Work.clear();
+    X.Feng._dirty = true;
+    X.Solar.buff = { growthMult: 1, yieldMult: 1, cold: 0, until: 0 };
+
     if (seed !== undefined) X.rng = X.Rng(seed);
-    if (!X.Map.seed || seed !== undefined) X.Map.generate(seed);
+    if (!X.Map.seed || seed !== undefined) { X.Map.mut = {}; X.Map.generate(seed); }
     scanTerrain();
     findHome();
     const [hx, hy] = G.home;
 
-    // 开局小院：置物台/灶台/2 灵田/3 床（免费落成）
+    // 开局小院：置物台/灶台/2 灵田/3 床/2 蒲团（免费落成）
     X.Build.place('stocker', hx - 3, hy - 1, { instant: true, free: true });
     X.Build.place('stove', hx + 1, hy - 1, { instant: true, free: true });
     X.Build.place('plot', hx - 3, hy + 1, { instant: true, free: true });
@@ -49,6 +58,8 @@
     X.Build.place('bedWood', hx - 6, hy - 1, { instant: true, free: true });
     X.Build.place('bedWood', hx - 6, hy + 1, { instant: true, free: true });
     X.Build.place('bedWood', hx + 4, hy - 1, { instant: true, free: true });
+    X.Build.place('mat', hx + 4, hy + 1, { instant: true, free: true });
+    X.Build.place('mat', hx + 5, hy + 1, { instant: true, free: true });
 
     // 开局物资 + 三名杂役
     X.Inv.add('wood', 50); X.Inv.add('stone', 25);
