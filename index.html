@@ -39,18 +39,18 @@
     color:#f2e8d0;background:var(--zhu);border-radius:4px 9px 5px 10px / 9px 4px 10px 4px;
     font-size:17px;transform:rotate(-4deg);letter-spacing:1px;
     box-shadow:inset 0 0 0 2px rgba(242,232,208,.75), 0 3px 10px rgba(90,30,20,.35)}
-  .title{font-size:20px;color:var(--jiao);letter-spacing:4px}
+  .title{font-size:20px;color:var(--jiao);letter-spacing:4px;white-space:nowrap;flex:none}
   .title small{font-size:11px;color:var(--dan);letter-spacing:2px;margin-left:8px}
   #res{display:flex;gap:6px;margin-left:6px}
-  .chip{font-size:13px;color:var(--zhong);background:rgba(242,235,216,.9);
+  .chip{font-size:13px;color:var(--zhong);background:rgba(242,235,216,.9);white-space:nowrap;
     border:1px solid rgba(106,95,76,.45);border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;
     padding:2px 9px;letter-spacing:1px;box-shadow:0 1px 4px rgba(60,50,34,.12)}
   .chip.bad{color:var(--zhu);border-color:var(--zhu)}
-  #date{margin-left:auto;font-size:15px;color:var(--zhong);letter-spacing:2px;
+  #date{margin-left:auto;font-size:15px;color:var(--zhong);letter-spacing:2px;white-space:nowrap;flex:none;
     background:rgba(242,235,216,.9);padding:3px 14px;border-radius:2px 7px 3px 8px / 7px 2px 8px 3px;
     border:1px solid rgba(106,95,76,.45);box-shadow:0 1px 4px rgba(60,50,34,.12)}
   #speed{display:flex;gap:4px;margin-left:8px}
-  #speed button,#filebtns button,#filebtns select{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);
+  #speed button,#filebtns button,#filebtns select{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);white-space:nowrap;
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;cursor:pointer}
   #speed button{width:36px}
   #speed button:hover,#filebtns button:hover{border-color:var(--nong);color:var(--jiao)}
@@ -139,11 +139,11 @@
   @keyframes drop{from{transform:translateY(-8px) rotate(-.4deg);opacity:0}}
 
   /* ---- 风水视图按钮 ---- */
-  #btn-feng{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
+  #btn-feng{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;white-space:nowrap;
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
     border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:6px}
   #btn-feng.on{background:var(--hua);border-color:var(--hua);color:var(--paper)}
-  #btn-travel,#btn-jianghu,#btn-market,#btn-story,#btn-cloud,#btn-clear{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;
+  #btn-travel,#btn-jianghu,#btn-market,#btn-story,#btn-cloud,#btn-clear{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);cursor:pointer;white-space:nowrap;flex:none;
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);
     border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;padding:0 11px;margin-left:4px}
   #btn-travel:hover,#btn-jianghu:hover,#btn-market:hover,#btn-story:hover,#btn-cloud:hover,#btn-clear:hover{border-color:var(--nong);color:var(--jiao)}

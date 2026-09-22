@@ -57,6 +57,16 @@
     g.strokeStyle = K().jiao; g.lineWidth = 0.7;
     g.strokeRect(cx - w / 2, yBottom - h, w, h);
   }
+  function clippedGlow(g, w, h, x, y, r, col0, col1) {  // 光晕裁剪在本建筑格内，不溢到邻格
+    g.save();
+    g.beginPath(); g.rect(0, 0, w, h); g.clip();
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, col0);
+    gr.addColorStop(1, col1);
+    g.fillStyle = gr;
+    g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+    g.restore();
+  }
 
   /* ---------- 各类建筑 ---------- */
   function drawBuilding(g, b, r, z) {
@@ -76,6 +86,7 @@
     }
     const L = begin(g, b, r, z), w = L.w, h = L.h;
     const cx = w / 2;
+    let post = null;   // 局部空间 restore 后的屏幕空间补画（如阵眼字号）
     shadow(g, w, h);
 
     if (kind === 'wall') {
@@ -154,10 +165,19 @@
       }
       g.strokeStyle = on ? X.Ink.hua : K().zhong; g.lineWidth = 1.6;
       g.beginPath(); g.arc(cx, h / 2, Math.min(w, h) * 0.42, 0, 7); g.stroke();
-      g.fillStyle = on ? X.Ink.hua : K().zhong;
-      g.font = `${Math.max(8, 12)}px "Kaiti SC",serif`;
-      g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(b.def.glyph, cx, h / 2 + 1);
+      // 字在屏幕空间以固定字号绘制：纸牌垫底，辉光上也不糊
+      const gx = r.x + (b.x + b.def.w / 2) * T * z, gy = r.y + (b.y + b.def.h / 2) * T * z;
+      post = () => {
+        const fs = Math.max(11, Math.min(17, 13 * z));
+        g.fillStyle = 'rgba(242,235,216,0.88)';
+        g.beginPath(); g.arc(gx, gy, fs * 0.78, 0, 7); g.fill();
+        g.strokeStyle = on ? X.Ink.a(X.Ink.hua, 0.8) : K().a(K().zhong, 0.6);
+        g.lineWidth = 1; g.stroke();
+        g.fillStyle = on ? X.Ink.hua : K().zhong;
+        g.font = `${fs}px "Kaiti SC",serif`;
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.fillText(b.def.glyph, gx, gy + 1);
+      };
     } else if (kind === 'splant' && b.sp) {   // 天地灵植：土丘三阶
       const st = b.sp.stage;
       const ELC = ['#b8a04a', '#5a9a5a', '#5a8ab8', '#c86a4a', '#a8865a'];
@@ -182,11 +202,7 @@
       g.strokeStyle = K().jiao; g.lineWidth = 0.9; g.stroke();
       // 火
       const fl = 0.6 + 0.4 * Math.sin(X.Tick.count / 9);
-      const fg = g.createRadialGradient(cx, h * 0.2, 0, cx, h * 0.2, 8);
-      fg.addColorStop(0, `rgba(238,150,70,${0.5 * fl})`);
-      fg.addColorStop(1, 'rgba(238,150,70,0)');
-      g.fillStyle = fg;
-      g.beginPath(); g.arc(cx, h * 0.2, 8, 0, 7); g.fill();
+      clippedGlow(g, w, h, cx, h * 0.2, 8, `rgba(238,150,70,${0.5 * fl})`, 'rgba(238,150,70,0)');
     } else if (kind === 'well') {    // 水井：石沿+双柱+小顶
       g.fillStyle = K().a(K().yan, 0.85);
       g.beginPath(); g.arc(cx, h * 0.66, Math.min(w, h) * 0.3, 0, 7); g.fill();
@@ -283,11 +299,7 @@
         g.closePath(); g.fill();
         g.strokeStyle = K().jiao; g.lineWidth = 0.8; g.stroke();
         const fl = 0.6 + 0.4 * Math.sin(X.Tick.count / 11 + b.x);
-        const pg = g.createRadialGradient(fx, fy - h * 0.16, 0, fx, fy - h * 0.16, w * 0.16);
-        pg.addColorStop(0, `rgba(120,190,170,${0.5 * fl})`);
-        pg.addColorStop(1, 'rgba(120,190,170,0)');
-        g.fillStyle = pg;
-        g.beginPath(); g.arc(fx, fy - h * 0.16, w * 0.16, 0, 7); g.fill();
+        clippedGlow(g, w, h, fx, fy - h * 0.16, w * 0.16, `rgba(120,190,170,${0.5 * fl})`, 'rgba(120,190,170,0)');
       } else if (id === 'forge') { // 砧+炭炉
         walls(g, w * 0.08, h * 0.5, w * 0.84, h * 0.42, '#c2b49a');
         roofMini(g, cx, h * 0.52, w * 0.95, h * 0.4, '#6a6258');
@@ -295,11 +307,7 @@
         g.fillRect(w * 0.18, h * 0.32, w * 0.28, h * 0.12);
         g.strokeStyle = K().jiao; g.lineWidth = 0.8; g.strokeRect(w * 0.18, h * 0.32, w * 0.28, h * 0.12);
         const fl = 0.6 + 0.4 * Math.sin(X.Tick.count / 7);
-        const fg = g.createRadialGradient(w * 0.66, h * 0.3, 0, w * 0.66, h * 0.3, w * 0.18);
-        fg.addColorStop(0, `rgba(238,120,60,${0.55 * fl})`);
-        fg.addColorStop(1, 'rgba(238,120,60,0)');
-        g.fillStyle = fg;
-        g.beginPath(); g.arc(w * 0.66, h * 0.3, w * 0.18, 0, 7); g.fill();
+        clippedGlow(g, w, h, w * 0.66, h * 0.3, w * 0.18, `rgba(238,120,60,${0.55 * fl})`, 'rgba(238,120,60,0)');
       } else {                     // 符案：案+符纸
         g.fillStyle = '#bfae90';
         g.fillRect(w * 0.12, h * 0.4, w * 0.76, h * 0.16);
@@ -572,6 +580,7 @@
       g.fillText(b.def.glyph || b.def.name[0], cx, h / 2 + 1);
     }
     g.restore();
+    if (post) post();
   }
 
   /* ---------- 弟子：淡彩小人 ---------- */
@@ -654,6 +663,7 @@
     FX.push({ type: 'bloom', x: b.x + b.def.w / 2, y: b.y + b.def.h / 2, born: performance.now() });
   });
   X.Bus.on('form:on', z => {
+    if (X.Form._dirty) return;   // 重入保护：recompute 未结束时不动 Form
     const a = X.Form.get().find(a => a.z.id === z.id);
     if (a) FX.push({ type: 'form', x: a.eye.x + 0.5, y: a.eye.y + 0.5, born: performance.now() });
   });
@@ -846,13 +856,13 @@
     // 夜色 + 灯火
     const sh = X.Time.shichen;
     let night = 0;
-    if (sh >= 11 || sh <= 1) night = 0.16;
-    else if (sh === 2 || sh === 10) night = 0.07;
+    if (sh >= 11 || sh <= 1) night = 0.22;
+    else if (sh === 2 || sh === 10) night = 0.09;
     if (night) {
       g.fillStyle = `rgba(24,30,54,${night})`;
       g.fillRect(0, 0, X.Canvas.cssW, X.Canvas.cssH);
       // 灯笼/石灯暖光
-      const glowA = night / 0.16 * 0.3;
+      const glowA = Math.min(0.36, night * 1.9);
       X.Build.each(b => {
         if (!b.built || b.def.kind !== 'lamp') return;
         const cx = r.x + (b.x + b.def.w / 2) * T * z, cy = r.y + (b.y + b.def.h / 2) * T * z;

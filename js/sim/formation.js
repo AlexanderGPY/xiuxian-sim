@@ -9,6 +9,7 @@
     X.Build.each(b => { if (b.built && b.def.kind === 'zeye') eyes.push(b); });
     const flags = [];
     X.Build.each(b => { if (b.built && b.def.kind === 'zflag') flags.push(b); });
+    const fired = [];
     for (const eye of eyes) {
       const zid = eye.def.tags.zeye;
       const z = X.Recipes.zhen.find(z => z.id === zid);
@@ -16,10 +17,11 @@
       const near = flags.filter(f => Math.hypot(f.x - eye.x, f.y - eye.y) <= z.radius);
       if (near.length >= z.flags) {
         F.active.push({ z, eye, flags: near });
-        X.Bus.emit('form:on', z);
+        fired.push(z);
       }
     }
-    F._dirty = false;
+    F._dirty = false;   // 先落脏标记再发事件：订阅方在回调里调 Form.get() 不会重入 recompute
+    for (const z of fired) X.Bus.emit('form:on', z);
   };
   F.get = () => { if (F._dirty) F.recompute(); return F.active; };
   F.isActive = function (zid) { return F.get().some(a => a.z.id === zid); };
