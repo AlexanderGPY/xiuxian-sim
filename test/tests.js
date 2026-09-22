@@ -221,6 +221,101 @@
     if (JSON.stringify(pick) !== JSON.stringify(now)) throw new Error('修行字段不一致');
   });
 
+  // ---- P3 百艺 ----
+  t('P3:丹道委托产出', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(31);
+    const [hx, hy] = X.Game.home;
+    X.Build.place('alchemy', hx + 8, hy + 4, { instant: true, free: true });
+    X.Build.place('herbPlot', hx - 4, hy + 4, { instant: true, free: true });
+    X.Inv.add('herb', 20);
+    const d = X.Disciple.list[0];
+    Object.assign(d, { kind: '修士', realm: 3, stage: 0, exp: 0, scId: 'yunshui' });
+    if (!X.Craft.queue('dan', 'pillJu', 3)) throw new Error('下单失败');
+    X.Tick.pump(4000);
+    if (X.Inv.count('pillJu') < 1) throw new Error('未出丹: ' + X.Inv.count('pillJu'));
+    if (d.craft.dan <= 0) throw new Error('熟练度未涨');
+    return `聚气丹×${X.Inv.count('pillJu')} 丹道熟练${d.craft.dan.toFixed(1)}`;
+  });
+  t('P3:丹药自动服用', () => {
+    const d = X.Disciple.list[0];
+    d.hp = 30; X.Inv.add('pillLiao', 2);
+    X.Tick.pump(X.Time.TICKS_PER_SHICHEN + 50);
+    if (d.hp <= 40) throw new Error('疗伤丹未生效 hp=' + Math.round(d.hp));
+    X.Inv.add('pillPoZ', 1);
+    const boost = X.Craft.brkBoost(d);
+    if (boost < 0.1 || X.Inv.count('pillPoZ') !== 0) throw new Error('破境丹未消耗');
+    return `疗伤(hp${Math.round(d.hp)})/破境(+${boost}) ✓`;
+  });
+  t('P3:器道法宝与装备', () => {
+    const d = X.Disciple.list[0];
+    X.Build.place('forge', X.Game.home[0] - 12, X.Game.home[1] + 6, { instant: true, free: true });
+    X.Inv.add('stone', 50); X.Inv.add('ling', 5);
+    if (!X.Craft.queue('qi', 'artSword', 2)) throw new Error('下单失败');
+    X.Tick.pump(3000);
+    if (!X.Craft.artifacts.length) throw new Error('未锻出法宝');
+    const a = X.Craft.artifacts[0];
+    if (!a.affixes.length) throw new Error('无词条');
+    X.Craft.equip(d, a.iid);
+    if (d.artifact !== a.iid || a.holder !== d.id) throw new Error('装备失败');
+    return `${X.Craft.artifacts.length}件，词条：${a.affixes.map(x => x.n).join('·')}`;
+  });
+  t('P3:符道护身符', () => {
+    X.Build.place('talisman', X.Game.home[0] + 8, X.Game.home[1] - 8, { instant: true, free: true });
+    X.Inv.add('wood', 30);
+    if (!X.Craft.queue('fu', 'fuHu', 4)) throw new Error('下单失败');
+    X.Tick.pump(9000);
+    if (X.Inv.count('fuHu') < 1) throw new Error('未出符');
+    const d = X.Disciple.list[0];
+    d.hp = 20;
+    X.Tick.pump(X.Time.TICKS_PER_SHICHEN + 50);
+    if (d.hp <= 30) throw new Error('护身符未自燃 hp=' + Math.round(d.hp));
+    return `护身符×${X.Inv.count('fuHu')} 自燃护体(hp${Math.round(d.hp)}) ✓`;
+  });
+  t('P3:阵法聚灵生效', () => {
+    const [hx, hy] = X.Game.home;
+    // 家园净空带内布阵（hy+4/5 两行无建筑）
+    const eye = X.Build.place('eyeJuling', hx, hy + 4, { instant: true, free: true });
+    let placed = 0;
+    for (const dx of [-2, -1, 1]) if (X.Build.place('zhenFlag', hx + dx, hy + 4, { instant: true, free: true })) placed++;
+    if (!eye || placed < 3) throw new Error(`摆放失败 eye=${!!eye} flags=${placed}`);
+    if (!X.Form.isActive('juling')) throw new Error('聚灵阵未激活');
+    const base = X.Map.qi[eye.y * X.Map.W + eye.x];
+    if (X.Form.qiAt(eye.x, eye.y) < base + 3) throw new Error('灵韵未提升');
+    const eye2 = X.Build.place('eyeYinqi', hx, hy + 5, { instant: true, free: true });
+    let p2 = 0;
+    for (const dx of [-2, 1, 3]) if (X.Build.place('zhenFlag', hx + dx, hy + 5, { instant: true, free: true })) p2++;
+    if (!eye2 || p2 < 3 || !X.Form.isActive('yinqi')) throw new Error(`引气阵未成 eye2=${!!eye2} flags=${p2}`);
+    return `聚灵+${X.Form.qiAt(eye.x, eye.y) - base}灵韵，引气阵成 ✓`;
+  });
+  t('P3:灵植种植与蕴养', () => {
+    X.Inv.add('seedMu', 1);
+    if (!X.SP.plant('seedMu')) throw new Error('种植失败');
+    let b = null;
+    X.Build.each(x => { if (x.def.kind === 'splant') b = x; });
+    if (!b) throw new Error('灵植不存在');
+    X.Tick.pump(95 * X.Time.ticksPerDay);
+    if (!b.sp || b.sp.stage < 3) throw new Error('95 日未成株: stage=' + (b.sp && b.sp.stage));
+    X.Inv.add('wood', 10);
+    const r = X.SP.feed(b, 'wood', 2);
+    if (!r.ok) throw new Error('蕴养失败: ' + r.why);
+    return `三阶功成，蕴养反应「${r.r}」✓`;
+  });
+  t('P3:存档v4百艺往返', () => {
+    const snap = JSON.parse(JSON.stringify(X.Save.snapshot()));
+    const nArt = snap.game.craft.artifacts.length;
+    const c0 = snap.game.disciples.map(r => r.craft);
+    X.Game.init(2);
+    X.Save.restore(snap);
+    if (X.Craft.artifacts.length !== nArt) throw new Error('法宝数不一致');
+    const c1 = X.Disciple.list.map(r => r.craft);
+    if (JSON.stringify(c0) !== JSON.stringify(c1)) throw new Error('熟练度不一致');
+    let sp = 0;
+    X.Build.each(x => { if (x.sp) sp++; });
+    if (sp !== snap.game.builds.filter(r => r.sp).length) throw new Error('灵植状态不一致');
+    return `法宝${nArt} 灵植${sp} ✓`;
+  });
+
   // ---- 存档 ----
   t('存档:v2往返一致', () => {
     X.Time.reset(); X.Map.mut = {};

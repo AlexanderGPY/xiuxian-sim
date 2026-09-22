@@ -27,6 +27,11 @@
   C.mods = function (d) {
     const m = { cult: 0, brk: 0, mood: 0, work: 0, gat: 0, cook: 0, hp: 0 };
     for (const s of C.spellsOn(d)) for (const k in s.eff) m[k] += s.eff[k];
+    if (X.Craft) {   // 法宝词条
+      const a = X.Craft.artMods(d);
+      for (const k in a) m[k] += a[k];
+    }
+    m.cult += X.Buffs.get(d, 'cult');   // 限时增益（凝神丹/修行符）
     return m;
   };
 
@@ -44,12 +49,13 @@
     if (d.realm === 0) return 0;
     const spot = d.cultSpot ? X.Build.inst[d.cultSpot] : null;
     if (!spot) return 0;
-    const qi = 1 + X.Map.qi[spot.y * X.Map.W + spot.x] / 20;
+    const qi = 1 + (X.Form ? X.Form.qiAt(spot.x, spot.y) : X.Map.qi[spot.y * X.Map.W + spot.x]) / 20;
+    const zhen = X.Form ? X.Form.cultAt(spot.x, spot.y) : 0;
     const feng = X.Feng.gradeFor(d).cultM;
     const mood = 0.6 + d.mood / 250;
     const m = C.mods(d);
     const active = d.kind === '修士' ? C.ACTIVE : C.PASSIVE * 2;
-    return active * tierM(d) * C.elMatch(d) * feng * qi * mood * (1 + m.cult);
+    return active * tierM(d) * C.elMatch(d) * feng * qi * mood * (1 + m.cult + zhen);
   };
 
   // 吐纳（杂役闲时自动，不打断活计；筑基为止）
@@ -88,7 +94,7 @@
     } else if (!R.atCap(d)) return { ok: false, why: '修为未满' };
     if (d.breakCd > X.Time.day) return { ok: false, why: '冷却' };
 
-    const chance = Math.min(0.95, C.chanceOf(d));
+    const chance = Math.min(0.95, C.chanceOf(d) + (X.Craft ? X.Craft.brkBoost(d) : 0));
     const ok = C.forcePass || X.rng.f() < chance;
     if (ok) {
       d.failPity = 0;
@@ -124,8 +130,8 @@
     return base * tierM(d) * C.elMatch(d) * feng * mood * (1 + C.mods(d).brk) * (1 + 0.2 * d.failPity);
   };
 
-  C.maxHp = d => (X.Disciple.hasTrait(d, 'tough') ? 130 : 100) + d.realm * 12;
-  C.lifespan = d => X.Realms.list[d.realm].life;
+  C.maxHp = d => (X.Disciple.hasTrait(d, 'tough') ? 130 : 100) + d.realm * 12 + (d.hpMaxBuff || 0);
+  C.lifespan = d => X.Realms.list[d.realm].life + (d.lifeBuff || 0);
   C.age = d => Math.max(0, Math.floor((X.Time.day - d.bornDay) / 360));
 
   // 自动筑基：圆满满 10 日无人理、修士名额<3，且至少保留两名杂役劳作

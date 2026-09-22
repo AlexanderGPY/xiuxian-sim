@@ -107,6 +107,11 @@
       else if (rel === '同') { grade = '吉'; cultM = 1.2; brkM = 1.08; }
       else if (rel === '克') { grade = '凶'; cultM = 0.7; brkM = 0.85; }
     }
+    // 藏风阵：房间中心被覆盖则风水升一档
+    if (X.Form && X.Form.fengUpAt((minX + maxX) >> 1, (minY + maxY) >> 1)) {
+      const up = { 凶: ['平', 1, 1], 平: ['吉', 1.2, 1.08], 吉: ['大吉', 1.4, 1.15] }[grade];
+      if (up) { grade = up[0]; cultM = up[1]; brkM = up[2]; }
+    }
     const names = { cult: '静室', sleep: '寝室', cook: '灶房' };
     return {
       tiles, bbox: { minX, minY, maxX, maxY },

@@ -34,6 +34,8 @@
       realm: 0, stage: 0, exp: 0, scId: '',
       eligible: false, readyDay: 0, breakCd: 0, failPity: 0, cultSpot: 0,
       bornDay: X.Time.day - age * 360,
+      // P3 百艺
+      craft: { dan: 0, qi: 0, fu: 0 }, buffs: [], artifact: 0, hpMaxBuff: 0, lifeBuff: 0,
     };
     return d;
   };
@@ -49,7 +51,7 @@
 
   D.hasTrait = (d, k) => d.traits.indexOf(k) >= 0;
   D.workSpeed = d => (1 + d.skills.build * 0.07 + d.stats.li / 400) * (D.hasTrait(d, 'diligent') ? 1.15 : D.hasTrait(d, 'lazy') ? 0.85 : 1);
-  D.maxHp = d => X.Cult ? X.Cult.maxHp(d) : (D.hasTrait(d, 'tough') ? 130 : 100);
+  D.maxHp = d => (X.Cult ? X.Cult.maxHp(d) : (D.hasTrait(d, 'tough') ? 130 : 100)) + (d.hpMaxBuff || 0) + (X.Craft ? X.Craft.artMods(d).hp : 0);
 
   // ---- 行走 ----
   function walkStep(d) {
@@ -133,6 +135,16 @@
     d.state = '赴冲关';
     return true;
   }
+  function startCraft(d, order) {
+    const st = X.Build.inst[order.station];
+    if (!st) { X.Craft.releaseOrder(order); return false; }
+    const r = X.Recipes.byId[order.rid];
+    d.task = { type: 'craft', phase: 'go', order: order.id, timer: r.work, art: order.art };
+    d.task.tx = st.x; d.task.ty = st.y;
+    setPath(d, st.x, st.y);
+    d.state = '赴' + ({ dan: '丹房', qi: '器坊', fu: '符案' })[order.art];
+    return true;
+  }
 
   // ---- 任务执行 ----
   function completeTask(d) {
@@ -162,7 +174,7 @@
         const b = X.Build.inst[t.bid];
         if (b) {
           const y = X.Farm.harvest(b);
-          d.carry = { item: 'grain', n: y };
+          d.carry = { item: y.item, n: y.n };
           d.skills.farm += 0.4;
           G.stats.harvests++;
         }
@@ -224,6 +236,9 @@
     // 杂役闲时吐纳
     if (d.kind === '杂役' && X.Cult) X.Cult.gain(d, X.Cult.passiveGain(d));
 
+    // 丹药/符箓自动服用（每时辰一次尝试，先于进食判定）
+    if (X.Craft && X.Tick.count % X.Time.TICKS_PER_SHICHEN === 0) X.Craft.autoConsume(d);
+
     // 生存优先级（饿极可唤醒睡者）
     if (!d.task || (d.task.type !== 'sleep' && d.task.type !== 'eat')) {
       if (N.hunger < 30) { startEat(d); }
@@ -242,9 +257,13 @@
     const t = d.task;
     if (!t) {
       if (d.kind === '修士') {
-        // 冲关优先（练气圆满已择典 / 大境圆满），否则打坐
+        // 冲关 > 百艺委托 > 打坐
         if ((d.realm === 1 && d.eligible && d.scId) || (d.realm >= 2 && X.Realms.atCap(d))) startBreak(d);
-        else startCultivate(d);
+        else {
+          const order = X.Craft ? X.Craft.claim(d) : null;
+          if (order) startCraft(d, order);
+          else startCultivate(d);
+        }
       } else if (d.eligible && d.scId) {
         startBreak(d);   // 择典已毕的杂役：冲关筑基
       } else d.state = '闲';
@@ -295,6 +314,16 @@
         }
         break;
       }
+      case 'craft': {
+        d.state = { dan: '炼丹', qi: '锻器', fu: '画符' }[t.art] || '炼制';
+        const order = X.Craft.orders.find(o => o.id === t.order);
+        if (!order) { d.task = null; break; }
+        if (--t.timer <= 0) {
+          X.Craft.finish(order, d, 0);
+          d.task = null;
+        }
+        break;
+      }
       default: {
         d.state = stateName(t.type);
         if (--t.timer <= 0) {
@@ -336,6 +365,8 @@
   function mood(d) {
     const N = d.needs;
     d.moodEv *= 0.7;
+    // 清心阵：阵中心境渐复
+    if (X.Form && X.Form.moodRegenAt(d.px | 0, d.py | 0)) d.moodEv += 1.2;
     let m = 40
       + (N.hunger - 50) * 0.20 + (N.sleep - 50) * 0.20
       + (N.comfort - 50) * 0.12 + (N.beauty - 50) * 0.12 + (N.social - 50) * 0.08
@@ -367,6 +398,8 @@
     realm: d.realm, stage: d.stage, exp: d.exp, scId: d.scId,
     eligible: d.eligible, readyDay: d.readyDay, breakCd: d.breakCd, failPity: d.failPity,
     cultSpot: d.cultSpot, bornDay: d.bornDay,
+    craft: { ...d.craft }, buffs: (d.buffs || []).map(b => ({ ...b })), artifact: d.artifact || 0,
+    hpMaxBuff: d.hpMaxBuff || 0, lifeBuff: d.lifeBuff || 0,
   }));
   D.restore = function (arr) {
     D.list = []; D.nextId = 1;
@@ -379,6 +412,8 @@
         realm: r.realm || 0, stage: r.stage || 0, exp: r.exp || 0, scId: r.scId || '',
         eligible: !!r.eligible, readyDay: r.readyDay || 0, breakCd: r.breakCd || 0, failPity: r.failPity || 0,
         cultSpot: r.cultSpot || 0, bornDay: r.bornDay !== undefined ? r.bornDay : X.Time.day - 20 * 360,
+        craft: r.craft || { dan: 0, qi: 0, fu: 0 }, buffs: r.buffs || [], artifact: r.artifact || 0,
+        hpMaxBuff: r.hpMaxBuff || 0, lifeBuff: r.lifeBuff || 0,
       });
       D.list.push(d);
     }

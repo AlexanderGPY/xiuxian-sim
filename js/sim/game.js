@@ -41,7 +41,9 @@
     X.Disciple.nextId = 1;
     X.Inv.reset();
     X.Work.clear();
+    if (X.Craft) X.Craft.reset();
     X.Feng._dirty = true;
+    if (X.Form) X.Form._dirty = true;
     X.Solar.buff = { growthMult: 1, yieldMult: 1, cold: 0, until: 0 };
 
     if (seed !== undefined) X.rng = X.Rng(seed);
@@ -103,6 +105,15 @@
     if (d) G.log(`${termName}收徒潮：${d.name} 投奔入门`);
   };
 
+  // 节气赠种：未拥有的天地灵植种子随机赐一
+  G.giftSeed = function () {
+    const unowned = X.Recipes.splant.filter(s => !X.SP.planted(s.id) && X.Inv.count(s.seed) === 0);
+    if (!unowned.length) return;
+    const s = X.rng.pick(unowned);
+    X.Inv.add(s.seed, 1);
+    G.log(`天降机缘，得${X.Items[s.seed].name}一枚（选中灵植或在营造面板种植）`);
+  };
+
   // 按人口自发开垦：每两人一块田（含基础两块），杂役自行营建
   G.autoFarm = function () {
     const pop = X.Disciple.list.length;
@@ -136,21 +147,26 @@
 
   G.snapshot = () => ({
     home: [...G.home],
-    stock: X.Inv.snapshot().stock,
+    stock: { ...X.Inv.stock },
     builds: X.Build.snapshot(),
     disciples: X.Disciple.snapshot(),
     stats: { ...G.stats },
     solar: { ...X.Solar.buff },
+    craft: X.Craft ? X.Craft.snapshot() : null,
   });
   G.restore = function (o) {
     G.home = o.home || [40, 30];
-    X.Inv.restore({ stock: o.stock });
+    X.Inv.reset();
+    for (const k in (o.stock || {})) X.Inv.stock[k] = o.stock[k];
     X.Build.restore(o.builds || []);
     X.Disciple.restore(o.disciples || []);
     Object.assign(X.Solar.buff, o.solar || {});
+    if (X.Craft) X.Craft.restore(o.craft || {});
     G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0 }, o.stats);
     scanTerrain();
     X.Work.clear();
+    X.Feng._dirty = true;
+    if (X.Form) X.Form._dirty = true;
     G.inited = true;
   };
 

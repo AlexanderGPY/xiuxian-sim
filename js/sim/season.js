@@ -15,7 +15,7 @@
       G.log(`【节气·${t.n}】${t.desc}`);
       switch (t.e) {
         case 'rain': buff.growthMult = 1.5; buff.until = X.Time.day + 5; break;
-        case 'rain2': buff.growthMult = 2.0; buff.until = X.Time.day + 5; X.Inv.add('grain', 10); break;
+        case 'rain2': buff.growthMult = 2.0; buff.until = X.Time.day + 5; X.Inv.add('grain', 10); G.giftSeed(); break;
         case 'meteor': X.Inv.add('stone', 15); G.log('天火流星坠落，拾得石料十五'); break;
         case 'harvest': buff.yieldMult = 1.2; buff.until = X.Time.day + 10; break;
         case 'frost':
@@ -23,7 +23,7 @@
           break;
         case 'visit': G.tryVisitor(t.n); break;
         case 'mood': X.Disciple.list.forEach(d => { d.moodEv += 8; }); break;
-        case 'mood2': X.Disciple.list.forEach(d => { d.moodEv += 14; }); break;
+        case 'mood2': X.Disciple.list.forEach(d => { d.moodEv += 14; }); G.giftSeed(); break;
         case 'cold': buff.cold = 1; buff.until = X.Time.day + 10; break;
       }
       X.Bus.emit('solar:term', t);

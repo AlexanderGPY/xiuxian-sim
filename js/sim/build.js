@@ -34,6 +34,7 @@
     const b = {
       id, def, x, y, built: !!opts.instant, progress: opts.instant ? def.work : 0,
       farm: def.tags && def.tags.farm ? { planted: false, prog: 0, ready: false } : null,
+      sp: def.kind === 'splant' ? { stage: 0, grow: 0, cd: 0 } : null,
     };
     B.inst[id] = b;
     for (let j = 0; j < def.h; j++) for (let i = 0; i < def.w; i++) B.grid[(y + j) * W + (x + i)] = id;
@@ -83,6 +84,7 @@
   B.snapshot = () => Object.values(B.inst).map(b => ({
     def: b.def.id, x: b.x, y: b.y, built: b.built, progress: b.progress,
     sleeper: b.sleeper || 0, farm: b.farm ? { ...b.farm } : null,
+    sp: b.sp ? { ...b.sp } : null,
   }));
   B.restore = function (arr) {
     B.grid.fill(0); B.inst = {}; B.nextId = 1;
@@ -92,6 +94,7 @@
       B.inst[id] = {
         id, def, x: r.x, y: r.y, built: r.built, progress: r.progress,
         sleeper: r.sleeper, farm: r.farm ? { ...r.farm } : null,
+        sp: r.sp ? { ...r.sp } : null,
       };
       for (let j = 0; j < def.h; j++) for (let i = 0; i < def.w; i++) B.grid[(r.y + j) * W + (r.x + i)] = id;
     }

@@ -15,23 +15,28 @@
   F.onDay = function () {
     const season = X.Time.season;
     const buff = X.Solar.buff;
-    const mult = SEASON_MULT[season] * (buff.until > X.Time.day ? buff.growthMult : 1);
     let rackBonus = 0;
     X.Build.each(b => { if (b.built && b.def.tags && b.def.tags.farmBuff) rackBonus += b.def.tags.farmBuff; });
     X.Build.each(b => {
       if (!b.built || !b.farm || !b.farm.planted || b.farm.ready) return;
-      b.farm.prog += mult * (1 + rackBonus);
+      const zhen = X.Form ? X.Form.growMultAt(b.x, b.y) : 1;
+      const mult = SEASON_MULT[season] * (buff.until > X.Time.day ? buff.growthMult : 1) * zhen * (1 + rackBonus);
+      b.farm.prog += mult;
       if (b.farm.prog >= F.GROW_STAGES) { b.farm.ready = true; b.farm.prog = F.GROW_STAGES; }
     });
   };
 
   F.harvest = function (b) {
-    if (!b.farm || !b.farm.ready) return 0;
-    let y = Math.round(F.BASE_YIELD * (0.85 + X.rng.f(0, 0.3)));
+    if (!b.farm || !b.farm.ready) return { item: 'grain', n: 0 };
+    const crop = (b.def.tags && b.def.tags.crop) || 'grain';
+    let y = crop === 'herb'
+      ? Math.round(12 * (0.85 + X.rng.f(0, 0.3)))
+      : Math.round(F.BASE_YIELD * (0.85 + X.rng.f(0, 0.3)));
     if (X.Solar.buff.until > X.Time.day) y = Math.round(y * X.Solar.buff.yieldMult);
+    if (X.Form) y = Math.round(y * X.Form.yieldMultAt(b.x, b.y));
     if (X.Time.season === 3) y = Math.round(y * 0.6);
     b.farm.planted = false; b.farm.prog = 0; b.farm.ready = false;
-    return y;
+    return { item: crop, n: y };
   };
 
   X.Farm = F;

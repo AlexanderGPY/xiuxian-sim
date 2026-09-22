@@ -38,21 +38,62 @@
       g.strokeStyle = K.nong; g.lineWidth = 1.6; g.strokeRect(x + 1, y + 1, w - 2, h - 2);
       return;
     }
-    if (kind === 'plot') {   // 灵田：垄线 + 生长点
-      g.fillStyle = K.a(K.zhe, 0.14); g.fillRect(x, y, w, h);
-      g.strokeStyle = K.a(K.zhe, 0.5); g.lineWidth = 1;
+    if (kind === 'plot') {   // 灵田/药圃：垄线 + 生长点
+      const isHerb = b.def.id === 'herbPlot';
+      g.fillStyle = isHerb ? K.a('#4c8a5a', 0.18) : K.a(K.zhe, 0.14);
+      g.fillRect(x, y, w, h);
+      g.strokeStyle = isHerb ? K.a('#4c8a5a', 0.55) : K.a(K.zhe, 0.5);
+      g.lineWidth = 1;
       for (let i = 1; i < 4; i++) {
         g.beginPath(); g.moveTo(x + 2, y + h * i / 4); g.lineTo(x + w - 2, y + h * i / 4); g.stroke();
       }
       if (b.farm && b.farm.planted) {
         const pr = b.farm.prog / 10;
-        g.fillStyle = b.farm.ready ? X.Ink.zhu : K.a(K.nong, 0.75);
+        g.fillStyle = b.farm.ready ? (isHerb ? '#4c8a5a' : X.Ink.zhu) : K.a(K.nong, 0.75);
         for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
           const s = (2.5 + pr * 4) * z;
           g.beginPath();
           g.arc(x + w * (0.3 + i * 0.4), y + h * (0.3 + j * 0.4), Math.max(1, s), 0, 7);
           g.fill();
         }
+      }
+      return;
+    }
+    if (kind === 'zflag') {   // 阵旗
+      g.strokeStyle = K.zhong; g.lineWidth = 2 * Math.max(1, z);
+      g.beginPath(); g.moveTo(x + w / 2, y + h - 2); g.lineTo(x + w / 2, y + 4); g.stroke();
+      g.fillStyle = X.Ink.hua;
+      g.beginPath(); g.moveTo(x + w / 2, y + 4); g.lineTo(x + w - 3, y + h * 0.35); g.lineTo(x + w / 2, y + h * 0.5); g.closePath(); g.fill();
+      return;
+    }
+    if (kind === 'zeye') {   // 阵眼：激活时花青辉光
+      const zid = b.def.tags && b.def.tags.zeye;
+      const on = X.Form && X.Form.isActive(zid);
+      if (on) {
+        g.fillStyle = X.Ink.a(X.Ink.hua, 0.15 + 0.05 * Math.sin(X.Tick.count / 20));
+        g.beginPath(); g.arc(x + w / 2, y + h / 2, w * 1.1, 0, 7); g.fill();
+      }
+      g.strokeStyle = on ? X.Ink.hua : K.zhong; g.lineWidth = 1.6;
+      g.beginPath(); g.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.42, 0, 7); g.stroke();
+      g.fillStyle = on ? X.Ink.hua : K.zhong;
+      g.font = `${Math.max(8, 12 * z)}px "Kaiti SC",serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(b.def.glyph, x + w / 2, y + h / 2 + 1);
+      return;
+    }
+    if (kind === 'splant' && b.sp) {   // 天地灵植三阶
+      const cx = x + w / 2, cy = y + h * 0.72;
+      const st = b.sp.stage;
+      const ELC = ['#b8a04a', '#5a9a5a', '#5a8ab8', '#c86a4a', '#a8865a'];
+      const ec = ELC[b.def.el];
+      g.strokeStyle = K.a(K.zhong, 0.8); g.lineWidth = 1.6;
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx, cy - (6 + st * 7) * Math.max(1, z)); g.stroke();
+      g.fillStyle = st >= 3 ? ec : K.a(ec, 0.65);
+      const r = (3 + st * 3) * Math.max(1, z);
+      g.beginPath(); g.arc(cx, cy - (6 + st * 7) * Math.max(1, z), Math.max(1.5, r), 0, 7); g.fill();
+      if (st >= 3) {
+        g.strokeStyle = X.Ink.a(ec, 0.6);
+        g.beginPath(); g.arc(cx, cy - (6 + st * 7) * Math.max(1, z), Math.max(3, r + 3 * z), 0, 7); g.stroke();
       }
       return;
     }
@@ -132,6 +173,20 @@
   Dyn.draw = function (g, r, z) {
     // 建筑
     X.Build.each(b => drawBuilding(g, b, r, z));
+    // 激活阵法：阵眼→阵旗 连线
+    if (X.Form) {
+      for (const a of X.Form.get()) {
+        const ex = r.x + (a.eye.x + 0.5) * T * z, ey = r.y + (a.eye.y + 0.5) * T * z;
+        g.strokeStyle = X.Ink.a(X.Ink.hua, 0.35 + 0.1 * Math.sin(X.Tick.count / 24));
+        g.lineWidth = 1.4;
+        for (const f of a.flags) {
+          g.beginPath();
+          g.moveTo(ex, ey);
+          g.lineTo(r.x + (f.x + 0.5) * T * z, r.y + (f.y + 0.5) * T * z);
+          g.stroke();
+        }
+      }
+    }
     // 弟子
     for (const d of X.Disciple.list) drawDisciple(g, d, r, z);
     // 选中建筑高亮

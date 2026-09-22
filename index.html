@@ -84,6 +84,22 @@
   .act{margin-top:8px;font-family:inherit;font-size:12.5px;padding:4px 10px;
     border:1px solid var(--zhu);color:var(--zhu);background:transparent;border-radius:3px;cursor:pointer}
   .act:hover{background:var(--zhu);color:var(--paper)}
+  .act.small{margin-top:2px;margin-right:4px;font-size:11.5px;padding:2px 7px;border-color:rgba(163,59,46,.5)}
+  .act.dim{opacity:.4}
+  .recipe{border-top:1px dashed rgba(92,88,82,.25);padding:6px 0 2px}
+  .recipe .rline{display:flex;justify-content:space-between;align-items:baseline}
+  .recipe b{font-size:13.5px;color:var(--jiao);font-weight:normal}
+  .recipe .rline span{font-size:11px;color:var(--dan)}
+  .recipe .rdesc{font-size:11.5px;color:var(--zhong);margin:2px 0 3px}
+  .qtag{display:inline-block;font-size:11.5px;color:var(--hua);border:1px solid rgba(61,90,128,.4);
+    border-radius:3px;padding:1px 6px;margin:2px 3px 0 0}
+  .qtag b{cursor:pointer;color:var(--zhu);font-weight:normal;margin-left:3px}
+  .artrow{display:flex;flex-wrap:wrap;gap:2px;margin-top:4px}
+  .seedhead{color:var(--hua);font-size:12px;margin-top:4px}
+  #qte-c{display:block;margin:10px auto;background:var(--paper);border:1px solid rgba(92,88,82,.3)}
+  .qte-tip{text-align:center;font-size:12.5px;color:var(--zhong);letter-spacing:1px;margin-bottom:8px}
+  u.good{text-decoration:none;color:#3d7a52}
+  u.bad{text-decoration:none;color:var(--zhu)}
 
   /* ---- 日志 ---- */
   #logbox{position:absolute;left:8px;bottom:44px;width:340px;max-height:190px;overflow:hidden;
@@ -191,12 +207,17 @@
 <script src="js/db/buildings.js"></script>
 <script src="js/db/realms.js"></script>
 <script src="js/db/scriptures.js"></script>
+<script src="js/db/recipes.js"></script>
 <script src="js/db/solar.js"></script>
 <script src="js/sim/path.js"></script>
 <script src="js/sim/inventory.js"></script>
 <script src="js/sim/build.js"></script>
 <script src="js/sim/fengshui.js"></script>
+<script src="js/sim/formation.js"></script>
 <script src="js/sim/cultivate.js"></script>
+<script src="js/sim/buff.js"></script>
+<script src="js/sim/craft.js"></script>
+<script src="js/sim/spiritplant.js"></script>
 <script src="js/sim/farm.js"></script>
 <script src="js/sim/disciple.js"></script>
 <script src="js/sim/work.js"></script>
@@ -208,6 +229,7 @@
 <script src="js/core/save.js"></script>
 <script src="js/core/debug.js"></script>
 <script src="test/tests.js"></script>
+<script src="js/ui/qte.js"></script>
 <script src="js/ui/hud.js"></script>
 <script>
 (function (X) {
