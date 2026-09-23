@@ -153,7 +153,7 @@
     const t = d.task, G = X.Game;
     switch (t.type) {
       case 'chop': {
-        const n = Math.round(8 * (D.hasTrait(d, 'greenhand') ? 1.4 : 1));
+        const n = Math.round(9 * (D.hasTrait(d, 'greenhand') ? 1.4 : 1));
         d.carry = { item: 'wood', n };
         X.Map.setTile(t.tx, t.ty, X.Map.TERRAIN.GRASS);
         const fi = G.forest.findIndex(p => p[0] === t.tx && p[1] === t.ty);
@@ -163,7 +163,7 @@
         break;
       }
       case 'mine': {
-        const n = Math.round(6 * (D.hasTrait(d, 'stonekin') ? 1.4 : 1));
+        const n = Math.round(7 * (D.hasTrait(d, 'stonekin') ? 1.4 : 1));
         d.carry = { item: 'stone', n };
         X.Map.setTile(t.tx, t.ty, X.Map.TERRAIN.SOIL);
         const ri = G.rocks.findIndex(p => p[0] === t.tx && p[1] === t.ty);
@@ -376,7 +376,7 @@
   };
 
   function workTicks(d, t) {
-    const base = { chop: 60, mine: 80, sow: 34, harvest: 56, cook: 110, cultivate: 0, break: 300 }[t.type] || 60;
+    const base = { chop: 46, mine: 60, sow: 34, harvest: 56, cook: 110, cultivate: 0, break: 300 }[t.type] || 60;
     let s = D.workSpeed(d);
     if ((t.type === 'chop' || t.type === 'mine') && d.skills.gather > 3) s *= 1.15;
     return Math.max(12, base / s);

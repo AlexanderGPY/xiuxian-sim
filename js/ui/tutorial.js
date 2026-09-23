@@ -61,6 +61,17 @@
     const i = X.Game.tutStep | 0;
     if (i >= STEPS.length) return null;
     const s = STEPS[i];
+    // 新手保底：到达套间步而物料不足时，一次性开山资助（静室套间为准）
+    if (s.id === 'suite' && !X.Game.stats.tutGift && X.Suites) {
+      const need = X.Suites.byId.suiteCalm.cost;
+      const shortS = need.stone - X.Inv.count('stone'), shortW = need.wood - X.Inv.count('wood');
+      if (shortS > 0 || shortW > 0) {
+        if (shortS > 0) X.Inv.add('stone', shortS);
+        if (shortW > 0) X.Inv.add('wood', shortW);
+        X.Game.stats.tutGift = 1;
+        X.Game.log('【开山资助】掌门下山筹得一批木石，静室套间可即落图');
+      }
+    }
     let ok = false;
     try { ok = !!s.done(); } catch (e) { ok = false; }
     if (ok) {

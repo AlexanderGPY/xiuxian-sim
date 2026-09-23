@@ -687,6 +687,30 @@
     return `快照参观✓ 排行取最优✓`;
   });
 
+  t('P6:开局物资与开山资助', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    // 开局库存直接够放静室套间
+    const need = X.Suites.byId.suiteCalm.cost;
+    if (X.Inv.count('stone') < need.stone || X.Inv.count('wood') < need.wood) {
+      throw new Error(`开局库存不够静室套间: 石${X.Inv.count('stone')}/${need.stone} 木${X.Inv.count('wood')}/${need.wood}`);
+    }
+    // 引导保底：花光石料后到达套间步，应触发开山资助
+    X.Game.tutStep = 0; X.Game.tutSkip = false; X.Game.stats.tutGift = 0;
+    X.Tut.begin();
+    X.Game.stats.playerPlaced = 1;   // 过 place 步
+    X.Inv.stock['stone'] = 5; X.Inv.stock['wood'] = 2;   // 挥霍一空
+    const s = X.Tut.step();
+    if (!s || s.id !== 'suite') throw new Error('应停在套间步');
+    if (!X.Game.stats.tutGift) throw new Error('开山资助未触发');
+    if (X.Inv.count('stone') < need.stone || X.Inv.count('wood') < need.wood) throw new Error('资助后仍不足');
+    // 只资助一次
+    X.Inv.stock['stone'] = 0;
+    X.Tut.step();
+    if (X.Inv.count('stone') > 0) throw new Error('资助重复');
+    return `开局石${60}木${70} 够静室(46石5木) · 短缺触发资助 ✓`;
+  });
+
   // ---- 存档 ----
   t('存档:v2往返一致', () => {
     X.Time.reset(); X.Map.mut = {};

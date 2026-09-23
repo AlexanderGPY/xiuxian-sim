@@ -73,8 +73,8 @@
     X.Build.place('mat', hx + 4, hy + 1, { instant: true, free: true });
     X.Build.place('mat', hx + 5, hy + 1, { instant: true, free: true });
 
-    // 开局物资 + 三名杂役
-    X.Inv.add('wood', 50); X.Inv.add('stone', 25);
+    // 开局物资（够直接落一间套间）+ 三名杂役
+    X.Inv.add('wood', 70); X.Inv.add('stone', 60);
     X.Inv.add('grain', 70); X.Inv.add('meal', 10);
     for (let i = 0; i < 3; i++) X.Disciple.add(hx + i - 1, hy + 3);
 
@@ -241,7 +241,7 @@
     G.tutStep = o.tutStep || 0;
     G.tutSkip = !!o.tutSkip;
     G.legacy = o.legacy || { points: 0, perks: [], ascList: [] };
-    G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0, playerPlaced: 0, suites: 0 }, o.stats);
+    G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0, playerPlaced: 0, suites: 0, tutGift: 0 }, o.stats);
     scanTerrain();
     scanLandmarks();
     X.Work.clear();
