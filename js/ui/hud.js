@@ -28,23 +28,40 @@
       .map(s => `<button class="bcard seed" data-seed="${s.seed}"><b>${X.Items[s.seed].name}</b><span>种于山野 · ${s.desc}</span></button>`).join('');
     el('btabs').innerHTML = X.Buildings.cats.map(c =>
       `<button class="${c === H.cat ? 'on' : ''}" data-c="${c}">${c}</button>`).join('');
+    // 套间页：整间落图
+    const suites = X.Suites ? X.Suites.list.map(s => {
+      const cost = Object.entries(s.cost).map(([k, v]) => `${X.Items[k].glyph}${v}`).join(' ');
+      return `<button class="bcard" data-suite="${s.id}">
+        <b>${s.name}</b><span>${cost}</span><span>${s.w}×${s.h} 整间 · ${s.desc}</span></button>`;
+    }).join('') : '';
     el('bgrid').innerHTML =
       (seeds && H.cat === '生产' ? `<div class="sub seedhead" style="grid-column:1/-1">天地灵植（有种子可种）</div>${seeds}` : '') +
-      X.Buildings.list
-      .filter(d => d.cat === H.cat)
-      .map(d => {
-        const locked = d.tags && d.tags.lock;
-        const cost = Object.entries(d.cost).map(([k, v]) => `${X.Items[k].glyph}${v}`).join(' ');
-        return `<button class="bcard ${locked ? 'locked' : ''}" data-id="${d.id}" ${locked ? 'disabled' : ''}>
+      (H.cat === '套间'
+        ? `<div class="sub seedhead" style="grid-column:1/-1">整间落图：墙+门+家具一次放好，自动成房间</div>${suites}`
+        : X.Buildings.list
+        .filter(d => d.cat === H.cat)
+        .map(d => {
+          const locked = d.tags && d.tags.lock;
+          const cost = Object.entries(d.cost).map(([k, v]) => `${X.Items[k].glyph}${v}`).join(' ');
+          return `<button class="bcard ${locked ? 'locked' : ''}" data-id="${d.id}" ${locked ? 'disabled' : ''}>
           <b>${d.name}</b><span>${locked ? d.tags.lock + ' 解锁' : cost}</span><span>${d.w}×${d.h}${tagsDesc(d)}</span></button>`;
-      }).join('');
+        }).join(''));
     el('btabs').querySelectorAll('button').forEach(b =>
       b.onclick = () => refreshBuildMenu(b.dataset.c));
     el('bgrid').querySelectorAll('button.seed').forEach(b =>
       b.onclick = () => { X.SP.plant(b.dataset.seed); refreshBuildMenu(); });
-    el('bgrid').querySelectorAll('button:not(.seed):not(.locked)').forEach(b =>
+    el('bgrid').querySelectorAll('button[data-suite]').forEach(b =>
+      b.onclick = () => {
+        H.buildSuite = X.Suites.byId[b.dataset.suite];
+        H.buildDef = null;
+        el('bhint').textContent = `放置：${H.buildSuite.name}（整间 ${H.buildSuite.w}×${H.buildSuite.h} · 右键/ESC 取消）`;
+        document.querySelectorAll('.bcard').forEach(x => x.classList.remove('on'));
+        b.classList.add('on');
+      });
+    el('bgrid').querySelectorAll('button[data-id]:not(.locked)').forEach(b =>
       b.onclick = () => {
         H.buildDef = X.Buildings.byId[b.dataset.id];
+        H.buildSuite = null;
         el('bhint').textContent = `放置：${H.buildDef.name}（拖动可连放 · 右键/ESC 取消）`;
         document.querySelectorAll('.bcard').forEach(x => x.classList.remove('on'));
         b.classList.add('on');
@@ -300,10 +317,19 @@
     cv.addEventListener('pointermove', e => {
       const p = X.Canvas.pick(e.clientX, e.clientY);
       X.Dyn.hover = [p.tx, p.ty];
+      X.Dyn.buildMode = !!(H.buildDef || H.buildSuite);
       if (H.buildDef) {
         const ox = p.tx - (H.buildDef.w >> 1), oy = p.ty - (H.buildDef.h >> 1);
         X.Dyn.ghost = { def: H.buildDef, x: ox, y: oy, ok: X.Build.terrainOk(H.buildDef, ox, oy) };
         if (H.painting && ['floor', 'wall'].includes(H.buildDef.kind)) tryPlace(ox, oy, true);
+      } else if (H.buildSuite) {
+        const s = H.buildSuite;
+        const ox = p.tx - (s.w >> 1), oy = p.ty - (s.h >> 1);
+        let ok = true;
+        for (const [id, dx, dy] of s.items) {
+          if (!X.Build.terrainOk(id, ox + dx, oy + dy) || X.Build.at(ox + dx, oy + dy)) { ok = false; break; }
+        }
+        X.Dyn.ghost = { suite: s, def: { w: s.w, h: s.h, id: 'suite', kind: 'suite' }, x: ox, y: oy, ok };
       }
     });
     cv.addEventListener('pointerdown', e => {
@@ -316,7 +342,16 @@
       const moved = downPt && Math.hypot(e.clientX - downPt[0], e.clientY - downPt[1]) > 5;
       if (e.button === 0 && !moved && e.target === cv) {
         const p = X.Canvas.pick(e.clientX, e.clientY);
-        if (H.buildDef) {
+        if (H.buildSuite) {
+          const s = H.buildSuite;
+          const r = X.Suites.place(s.id, p.tx - (s.w >> 1), p.ty - (s.h >> 1));
+          if (r.ok) {
+            X.Game.stats.suites = (X.Game.stats.suites || 0) + 1;
+            toast(`${s.name}落图（${r.n} 件蓝图）`);
+            X.Feng._dirty = true;
+          } else toast(r.why);
+        }
+        else if (H.buildDef) {
           const ox = p.tx - (H.buildDef.w >> 1), oy = p.ty - (H.buildDef.h >> 1);
           tryPlace(ox, oy, false);
         } else selectAt(p);
@@ -328,7 +363,7 @@
     });
   }
   function cancelBuild() {
-    H.buildDef = null; X.Dyn.ghost = null; H.painting = false;
+    H.buildDef = null; H.buildSuite = null; X.Dyn.ghost = null; X.Dyn.buildMode = false; H.painting = false;
     el('bhint').textContent = '选择建筑后在地图上放置';
     document.querySelectorAll('.bcard').forEach(x => x.classList.remove('on'));
   }
@@ -338,7 +373,10 @@
     if (H.lastPaint && H.lastPaint === x + ',' + y) return;
     H.lastPaint = x + ',' + y;
     const b = X.Build.place(def.id, x, y);
-    if (!b && !silent) toast('无法放置：地形不合或物料不足');
+    if (b) {
+      X.Game.stats.playerPlaced = (X.Game.stats.playerPlaced || 0) + 1;
+      X.Feng._dirty = true;
+    } else if (!silent) toast('无法放置：地形不合或物料不足');
   }
   function selectAt(p) {
     // 优先弟子
@@ -668,18 +706,68 @@
     });
     refreshRes(); refreshSel();
     wireP4Buttons();
-    // P6 教学条 + 清晰模式
+    // 掌门手册 2.0（聚光灯引导）+ 按钮门控 + 清晰模式
     const tut = document.createElement('div');
     tut.id = 'tut'; tut.style.display = 'none';
     document.body.appendChild(tut);
     const refreshTut = () => {
       const s = X.Tut ? X.Tut.step() : null;
-      tut.style.display = s ? 'flex' : 'none';
-      if (s) tut.innerHTML = `<b>掌门手册 ${s.idx}/${s.total}·${s.name}</b><span>${s.hint}</span><button id="tut-skip">跳过</button>`;
-      const sk = el('tut-skip');
-      if (sk) sk.onclick = () => { X.Tut.skip(); refreshTut(); };
+      document.querySelectorAll('.tut-hi').forEach(x => x.classList.remove('tut-hi'));
+      tut.style.display = s ? 'block' : 'none';
+      if (!s) return;
+      // 定位：目标元素旁 / 无目标居中
+      let left = innerWidth / 2 - 240, top = innerHeight / 2 - 90;
+      if (s.target) {
+        const tEl = document.querySelector(s.target);
+        if (tEl) {
+          tEl.classList.add('tut-hi');
+          const rc = tEl.getBoundingClientRect();
+          left = Math.max(8, Math.min(innerWidth - 500, rc.left + rc.width / 2 - 240));
+          top = rc.bottom + 10;
+          if (top + 150 > innerHeight) top = Math.max(8, rc.top - 155);
+        }
+      }
+      tut.style.left = left + 'px'; tut.style.top = top + 'px';
+      tut.innerHTML = `<b>掌门手册 ${s.idx}/${s.total} · ${s.title}</b>
+        <div class="tut-text">${s.text}</div>
+        <div class="tut-btns"><button id="tut-go">${s.btn || '下一步'}</button><button id="tut-skip">跳过教学</button></div>`;
+      el('tut-go').onclick = () => {
+        if (s.id === 'welcome' || s.id === 'world') X.Tut.begin();
+        refreshTut();
+      };
+      el('tut-skip').onclick = () => {
+        document.querySelectorAll('.tut-hi').forEach(x => x.classList.remove('tut-hi'));
+        X.Tut.skip(); refreshTut();
+      };
     };
-    setInterval(refreshTut, 1200); refreshTut();
+    setInterval(refreshTut, 900); refreshTut();
+    // 顶栏按钮按进度解锁（解锁瞬间提示）
+    const GATES = { 'btn-travel': 'travel', 'btn-jianghu': 'jianghu', 'btn-market': 'market', 'btn-story': 'story' };
+    setInterval(() => {
+      for (const [bid, kind] of Object.entries(GATES)) {
+        const btn = el(bid);
+        if (!btn) continue;
+        const show = X.Tut.unlocked(kind);
+        if (show && btn.style.display === 'none') {
+          btn.style.display = '';
+          toast(`解锁新面板：${btn.title.split('·')[0]}`);
+        }
+        if (!show) btn.style.display = 'none';
+        else if (btn.style.display === '') btn.style.display = '';
+      }
+    }, 700);
+    // 帮助指南
+    el('btn-help').onclick = () => {
+      H.modalKind = null;
+      openModal('玩法指南', `
+        <div class="sub" style="margin:6px 0"><b style="color:var(--jiao)">主线循环</b>：安身（田/灶/床）→ 杂役吐纳 → 择典筑基 → 修士打坐冲境 → 丹器符阵辅修 → 游历扬名 → 御妖潮/犯山 → 渡劫九重 → 飞升传承。</div>
+        <div class="sectrow"><b style="color:var(--jiao)">房间与风水</b>：墙+门围合即成「房间」，家具五行生扶本命＝大吉（修炼×1.4、破境加成）。嫌手围麻烦——营造【套间】页一键整间。观星台建好后顶栏「☰风水」可看全图吉凶。</div>
+        <div class="sectrow"><b style="color:var(--jiao)">杂役 vs 修士</b>：杂役干活（建/种/炊/搬）闲时吐纳；练气圆满可择典筑基转修士。修士不干活：打坐/冲关/百艺/迎敌。转职门槛见弟子面板。</div>
+        <div class="sectrow"><b style="color:var(--jiao)">百艺</b>：建丹房/器坊/符案，选中作坊即可「委托」（修士自动做）或「亲手」（小窗时机条加成）。丹药符箓会自动服用。</div>
+        <div class="sectrow"><b style="color:var(--jiao)">江湖</b>：游历面板派修士出行（记闻/声望/残卷/灵材）；声望 25 后妖潮每 30 日一波，修士自动御敌；仇怨满会犯山；坊市每 90 日拍卖（声望 60）。</div>
+        <div class="sectrow"><b style="color:var(--jiao)">终局</b>：渡劫境 30 日一劫共九劫（护体丹/法宝/护体阵/道侣四件套备战，弟子面板可亲手渡）；旧案五章随进度揭开；三结局+无尽模式见「旧案」面板。</div>
+        <div class="hint" style="margin-top:8px">快捷键：空格=暂停/继续 · ESC/右键=取消放置 · 拖动地图=平移 · 滚轮=缩放 · 存档在浏览器本地（工具栏），云端可同步。</div>`);
+    };
     const clr = el('btn-clear');
     try { if (localStorage.getItem('xiang_clear') === '1') { document.body.classList.add('clear'); clr.classList.add('on'); } } catch {}
     clr.onclick = () => {

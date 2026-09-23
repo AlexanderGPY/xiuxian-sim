@@ -587,18 +587,52 @@
   });
 
   // ---- P6 成卷 ----
-  t('P6:教学步骤推进', () => {
+  t('P6:教学步骤推进与按钮门控', () => {
     X.Time.reset(); X.Map.mut = {};
     X.Game.init(41);
-    if (!X.Game.inited) throw new Error('未开局');
-    const s1 = X.Tut.step();
-    if (!s1 || s1.id !== 'build') throw new Error('首步应为安身之所');
-    X.Game.stats.buildingsDone = 3;   // 模拟营建完成
-    const s2 = X.Tut.step();
-    if (!s2 || s2.id !== 'farm') throw new Error('第二步应为开辟灵田');
+    let s1 = X.Tut.step();
+    if (!s1 || s1.id !== 'welcome') throw new Error('首步应为欢迎');
+    X.Tut.begin();   // 点"开始"
+    s1 = X.Tut.step();
+    if (!s1 || s1.id !== 'place') throw new Error('第二步应为放置建筑');
+    // 门控：无修士时游历锁定
+    if (X.Tut.unlocked('travel')) throw new Error('无修士时游历不应解锁');
+    const d = X.Disciple.list[0];
+    d.kind = '修士';
+    if (!X.Tut.unlocked('travel')) throw new Error('有修士游历应解锁');
+    if (X.Tut.unlocked('jianghu')) throw new Error('声望不足江湖不应解锁');
     X.Game.tutSkip = true;
     if (X.Tut.step() !== null) throw new Error('跳过后仍有教学');
-    return `安身之所→开辟灵田→可跳过 ✓`;
+    return `欢迎→放置→门控(游历随修士/江湖随声望)→可跳过 ✓`;
+  });
+  t('P6:套间整间落图成房间', () => {
+    X.Time.reset(); X.Map.mut = {};
+    X.Game.init(41);
+    X.Inv.add('wood', 200); X.Inv.add('stone', 200);
+    // 找一块 6×6 空地
+    const M = X.Map, T = M.TERRAIN;
+    const [hx, hy] = X.Game.home;
+    let sx = 0, sy = 0;
+    outer: for (let r = 6; r < 30; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r * 2; dx <= r * 2; dx++) {
+      const x = hx + dx, y = hy + dy;
+      if (x < 2 || y < 2 || x > M.W - 8 || y > M.H - 8) continue;
+      let ok = true;
+      for (let j = 0; j < 6 && ok; j++) for (let i = 0; i < 6 && ok; i++) {
+        const t = M.terrain[(y + j) * M.W + x + i];
+        if (t === T.WATER || t === T.ROCK || t === T.FOREST) ok = false;
+        if (X.Build.at(x + i, y + j)) ok = false;
+      }
+      if (ok) { sx = x; sy = y; break outer; }
+    }
+    if (!sx && !sy) throw new Error('找不到 6×6 空地');
+    const r = X.Suites.place('suiteCalm', sx, sy);
+    if (!r.ok) throw new Error('套间放置失败: ' + r.why);
+    if (r.n !== X.Suites.byId.suiteCalm.items.length) throw new Error('件数不全: ' + r.n);
+    // 蓝图即时落成（测试直接竣工）
+    X.Build.each(b => { if (!b.built) { X.Build.work(b, 1e6); } });
+    const room = X.Feng.roomAt(sx + 2, sy + 2);
+    if (!room) throw new Error('未围合出房间');
+    return `${X.Suites.byId.suiteCalm.name} ${r.n}件 → ${room.purpose || '房间'}围合 ✓`;
   });
 
   // ---- P7 云卷云舒（后端 API） ----

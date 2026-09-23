@@ -75,7 +75,7 @@
   X.Buildings = {
     list: D,
     byId: {},
-    cats: ['结构', '起居', '道场', '生产', '百艺', '仓储', '装饰', '卫生'],
+    cats: ['结构', '起居', '道场', '生产', '百艺', '仓储', '装饰', '卫生', '套间'],
   };
   for (const d of D) X.Buildings.byId[d.id] = d;
 })(globalThis.XIANG);

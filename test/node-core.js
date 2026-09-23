@@ -15,6 +15,7 @@ const FILES = [
   'js/db/scriptures.js',
   'js/db/recipes.js',
   'js/db/solar.js',
+  'js/db/suites.js',
   'js/db/world.js',
   'js/db/npcs.js',
   'js/db/events.js',

@@ -87,25 +87,51 @@
     const L = begin(g, b, r, z), w = L.w, h = L.h;
     const cx = w / 2;
     let post = null;   // 局部空间 restore 后的屏幕空间补画（如阵眼字号）
-    shadow(g, w, h);
+    // 底座：屋类建筑统一石基落地（否则椭圆影）
+    const PLINTH = { obs: 1, craft: 1, store: 1, lib: 1, guest: 1, gate: 1, stove: 1, well: 1 };
+    if (PLINTH[kind]) {
+      g.fillStyle = K().a(K().yan, 0.55);
+      g.fillRect(-2, -2, w + 4, h + 4);
+      g.strokeStyle = K().a(K().jiao, 0.45); g.lineWidth = 1;
+      g.strokeRect(-2, -2, w + 4, h + 4);
+    } else shadow(g, w, h);
 
+    // 墙体邻接：相邻墙/门连体成整墙
+    const wallNbr = dir => {
+      const dx = dir === 'e' ? 1 : dir === 'w' ? -1 : 0;
+      const dy = dir === 's' ? 1 : dir === 'n' ? -1 : 0;
+      const iid = X.Build.at(b.x + dx, b.y + dy);
+      const nb = iid ? X.Build.inst[iid] : null;
+      return !!(nb && (nb.def.kind === 'wall' || nb.def.kind === 'door'));
+    };
     if (kind === 'wall') {
-      if (id === 'wallStone') {   // 石墙：砖缝
-        g.fillStyle = K().a(K().yan, 0.9); g.fillRect(0.5, 0.5, w - 1, h - 1);
-        g.strokeStyle = K().a(K().jiao, 0.6); g.lineWidth = 0.7;
+      const cn = { n: wallNbr('n'), e: wallNbr('e'), s: wallNbr('s'), w: wallNbr('w') };
+      const x0 = cn.w ? 0 : 0.5, x1 = cn.e ? w : w - 0.5;
+      const y0 = cn.n ? 0 : 0.5, y1 = cn.s ? h : h - 0.5;
+      if (id === 'wallStone') {   // 石墙：连体砖墙
+        g.fillStyle = K().a(K().yan, 0.92);
+        g.fillRect(x0, y0, x1 - x0, y1 - y0);
+        g.strokeStyle = K().a(K().jiao, 0.5); g.lineWidth = 0.6;
         for (let i = 1; i < 3; i++) {
-          g.beginPath(); g.moveTo(1, h * i / 3); g.lineTo(w - 1, h * i / 3); g.stroke();
-          g.beginPath(); g.moveTo((i % 2) ? w * 0.33 : w * 0.66, h * (i - 1) / 3); g.lineTo((i % 2) ? w * 0.33 : w * 0.66, h * i / 3); g.stroke();
+          const yy = y0 + (y1 - y0) * i / 3;
+          g.beginPath(); g.moveTo(x0, yy); g.lineTo(x1, yy); g.stroke();
         }
-        g.strokeStyle = K().jiao; g.lineWidth = 1; g.strokeRect(0.5, 0.5, w - 1, h - 1);
-      } else {                    // 木墙：竖板
-        g.fillStyle = '#c9b492'; g.fillRect(0.5, 0.5, w - 1, h - 1);
-        g.strokeStyle = K().a(K().zhe, 0.75); g.lineWidth = 0.8;
+      } else {                    // 木墙：连体板壁
+        g.fillStyle = '#c9b492';
+        g.fillRect(x0, y0, x1 - x0, y1 - y0);
+        g.strokeStyle = K().a(K().zhe, 0.7); g.lineWidth = 0.7;
         for (let i = 1; i < 3; i++) {
-          g.beginPath(); g.moveTo(w * i / 3, 1); g.lineTo(w * i / 3, h - 1); g.stroke();
+          const xx = x0 + (x1 - x0) * i / 3;
+          g.beginPath(); g.moveTo(xx, y0); g.lineTo(xx, y1); g.stroke();
         }
-        g.strokeStyle = K().jiao; g.lineWidth = 1; g.strokeRect(0.5, 0.5, w - 1, h - 1);
       }
+      g.strokeStyle = K().jiao; g.lineWidth = 1;
+      g.beginPath();
+      if (!cn.n) { g.moveTo(x0, y0); g.lineTo(x1, y0); }
+      if (!cn.s) { g.moveTo(x0, y1); g.lineTo(x1, y1); }
+      if (!cn.w) { g.moveTo(x0, y0); g.lineTo(x0, y1); }
+      if (!cn.e) { g.moveTo(x1, y0); g.lineTo(x1, y1); }
+      g.stroke();
     } else if (kind === 'floor') {
       if (id === 'floorStone') {
         g.fillStyle = K().a(K().yan, 0.5); g.fillRect(0, 0, w, h);
@@ -580,6 +606,20 @@
       g.fillText(b.def.glyph || b.def.name[0], cx, h / 2 + 1);
     }
     g.restore();
+    // 名牌：放大时在建筑下方显示名称小签
+    if (z >= 1.25 && b.def.kind !== 'floor' && b.def.kind !== 'plot') {
+      const sx = r.x + (b.x + b.def.w / 2) * T * z, sy = r.y + (b.y + b.def.h) * T * z;
+      const label = b.def.name;
+      g.font = '9px "Kaiti SC",serif';
+      const tw = g.measureText(label).width + 6;
+      g.fillStyle = X.Ink.a('#f7f1e2', 0.85);
+      g.fillRect(sx - tw / 2, sy + 1, tw, 11);
+      g.strokeStyle = X.Ink.a(X.Ink.zhong, 0.4); g.lineWidth = 0.5;
+      g.strokeRect(sx - tw / 2, sy + 1, tw, 11);
+      g.fillStyle = X.Ink.zhong;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(label, sx, sy + 7);
+    }
     if (post) post();
   }
 
@@ -827,11 +867,31 @@
       g.strokeStyle = X.Ink.a(X.Ink.zhong, 0.6); g.lineWidth = 1;
       g.strokeRect(r.x + tx * T * z, r.y + ty * T * z, T * z, T * z);
     }
-    // 建造幽灵
+    // 建造模式：既有房间虚线轮廓（放置围墙时所见即所得）
+    if (Dyn.buildMode && X.Feng && !Dyn.fengView) {
+      g.setLineDash([5, 4]);
+      g.strokeStyle = X.Ink.a(X.Ink.hua, 0.55); g.lineWidth = 1.2;
+      for (const room of X.Feng.get()) {
+        const bx = r.x + room.bbox.minX * T * z, by = r.y + room.bbox.minY * T * z;
+        g.strokeRect(bx, by, (room.bbox.maxX - room.bbox.minX + 1) * T * z, (room.bbox.maxY - room.bbox.minY + 1) * T * z);
+      }
+      g.setLineDash([]);
+    }
+    // 建造幽灵（单件 / 套间整间）
     if (Dyn.ghost) {
-      const { def, x, y, ok } = Dyn.ghost;
-      g.fillStyle = ok ? X.Ink.a(X.Ink.hua, 0.25) : X.Ink.a(X.Ink.zhu, 0.25);
+      const { def, x, y, ok, suite } = Dyn.ghost;
+      g.fillStyle = ok ? X.Ink.a(X.Ink.hua, 0.18) : X.Ink.a(X.Ink.zhu, 0.25);
       g.fillRect(r.x + x * T * z, r.y + y * T * z, def.w * T * z, def.h * T * z);
+      if (suite) {   // 套间：逐件画缩略块（墙线/门/家具）
+        for (const [pid, dx, dy] of suite.items) {
+          const pdef = X.Buildings.byId[pid];
+          const px = r.x + (x + dx) * T * z, py = r.y + (y + dy) * T * z;
+          const wallish = pdef.kind === 'wall' || pdef.kind === 'door';
+          g.fillStyle = wallish ? X.Ink.a(X.Ink.zhong, 0.4)
+            : pdef.kind === 'craft' ? X.Ink.a(X.Ink.zhu, 0.3) : X.Ink.a(X.Ink.hua, 0.35);
+          g.fillRect(px + 1, py + 1, pdef.w * T * z - 2, pdef.h * T * z - 2);
+        }
+      }
       g.strokeStyle = ok ? X.Ink.hua : X.Ink.zhu; g.lineWidth = 1.6;
       g.strokeRect(r.x + x * T * z, r.y + y * T * z, def.w * T * z, def.h * T * z);
     }

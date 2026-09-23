@@ -78,7 +78,8 @@
     X.Inv.add('grain', 70); X.Inv.add('meal', 10);
     for (let i = 0; i < 3; i++) X.Disciple.add(hx + i - 1, hy + 3);
 
-    G.logs = []; G.stats = { mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0 };
+    G.logs = []; G.stats = { mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0, playerPlaced: 0, suites: 0 };
+    G._tutDay0 = X.Time.day;
     X.Work.clear();
     G.inited = true;
     G.log('云隐山门立足，三名杂役入册');
@@ -240,7 +241,7 @@
     G.tutStep = o.tutStep || 0;
     G.tutSkip = !!o.tutSkip;
     G.legacy = o.legacy || { points: 0, perks: [], ascList: [] };
-    G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0 }, o.stats);
+    G.stats = Object.assign({ mealsCooked: 0, mealsEaten: 0, harvests: 0, buildingsDone: 0, playerPlaced: 0, suites: 0 }, o.stats);
     scanTerrain();
     scanLandmarks();
     X.Work.clear();
