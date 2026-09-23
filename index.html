@@ -32,7 +32,7 @@
   }
 
   /* ---- 顶栏 ---- */
-  #topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;
+  #topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;flex-wrap:wrap;row-gap:4px;gap:12px;
     padding:8px 14px;pointer-events:none;z-index:10}
   #topbar>*{pointer-events:auto}
   .seal{width:38px;height:38px;line-height:38px;text-align:center;
@@ -52,7 +52,7 @@
   #speed{display:flex;gap:4px;margin-left:8px}
   #speed button,#filebtns button,#filebtns select{height:30px;font-family:inherit;font-size:13px;color:var(--zhong);white-space:nowrap;
     background:rgba(242,235,216,.92);border:1px solid rgba(106,95,76,.5);border-radius:2px 6px 3px 7px / 6px 2px 7px 3px;cursor:pointer}
-  #speed button{width:36px}
+  #speed button{min-width:36px;width:auto;padding:0 7px}
   #speed button:hover,#filebtns button:hover{border-color:var(--nong);color:var(--jiao)}
   #speed button.on{background:var(--zhu);border-color:var(--zhu);color:var(--paper)}
   #filebtns{display:flex;gap:4px;margin-left:8px}
@@ -323,6 +323,17 @@
   X.Scene.render();
   X.Game.init();
   X.HUD.init();
+
+  // 顶栏高度自适应：按钮换行时把左右面板压到顶栏下方，避免重叠
+  const topbar = document.getElementById('topbar');
+  const fitPanels = () => {
+    const h = topbar.offsetHeight + 6;
+    document.getElementById('left').style.top = h + 'px';
+    document.getElementById('right').style.top = h + 'px';
+  };
+  if (window.ResizeObserver) new ResizeObserver(fitPanels).observe(topbar);
+  window.addEventListener('resize', fitPanels);
+  fitPanels();
 
   // 日期
   const dateEl = document.getElementById('date');

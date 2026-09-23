@@ -18,11 +18,14 @@
     T.tick++;
     if (T.tick % T.TICKS_PER_SHICHEN !== 0) return;
     T.shichen++;
-    X.Bus.emit('time:shichen', T.shichen);
-    if (T.shichen < T.SHICHEN_PER_DAY) return;
+    if (T.shichen < T.SHICHEN_PER_DAY) {
+      X.Bus.emit('time:shichen', T.shichen);   // 始终带 0~11 的合法时辰
+      return;
+    }
     T.shichen = 0; T.day++; T.dayOfYear++;
+    X.Bus.emit('time:shichen', T.shichen);     // 归零后再发（子时），订阅方不会见到 12
     X.Bus.emit('time:day', T.day);
-    if (T.dayOfYear % T.DAY_PER_SEASON === 0) X.Bus.emit('time:season', T.season);
+    if (T.dayOfYear % 90 === 0) X.Bus.emit('time:season', T.season);
     if (T.dayOfYear >= 360) { T.dayOfYear = 0; T.year++; X.Bus.emit('time:year', T.year); }
   }
   X.Tick.on(onTick);
